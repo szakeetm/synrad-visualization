@@ -48,3 +48,22 @@ npm test
 ```
 
 Node's built-in tests check Lorentz aberration, light propagation, subluminal trajectories and dragging, K normalization, reset, and bounded history. Browser interaction checks complement these physics tests.
+
+## Virtual accelerating cavity
+
+The fifth preset accelerates the charge along +x through a finite ideal gap.
+Entrance speed and energy gain Δγ are adjustable; the central gap applies
+constant force (`dp/dt = F`, `dγ/dx = F`, c=m=1). Straight drifts join the
+gap continuously; Repeat pass restarts with compatible incoming field history.
+There is no RF phase, fringe field, focusing, or radiation reaction.
+
+A separate live diagram compares the instantaneous rest-frame and lab-frame
+angular power shapes. Radial length is `dP/dΩ` per source time, each curve
+normalized to its own peak: `sin²θ / (1 − β cosθ)⁵` for longitudinal acceleration.
+The lab pattern is an axisymmetric hollow forward cone with a dark axis;
+the displayed two lobes are a planar slice. Peak angle tends to `1/(2γ)`.
+In drifts the diagram is labeled as a reference shape: actual radiation is off.
+The field-line brightness remains qualitative.
+
+Reference: Jackson, *Classical Electrodynamics*, §14.2 (angular distribution
+for linear motion).

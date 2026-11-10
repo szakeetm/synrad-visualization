@@ -1,4 +1,5 @@
 import { createTravelingPath } from './traveling.js';
+import { createCavityPath } from './cavity.js';
 // Radiation2D browser implementation, GPL-3.0-only.
 // Wavelet construction: Tsumoru Shintake, LINAC2002, equations (4) and (5).
 // Also informed by Andrei Frolov's GPL-3.0 Radiation 2D Swift reimplementation.
@@ -73,7 +74,7 @@ export function dipoleFieldTail(sim, viewportReach) {
 export function travelingFieldTail(sim, viewportReach) {
   const {beta,density} = sim.config, path = sim.path;
   const oldest=sim.history[0].time;
-  const far=Math.min(oldest-1,path.entryTime-1,sim.time-(viewportReach+1)/(1-beta));
+  const far=Math.min(oldest-1,path.entryTime-1,sim.time-(viewportReach+1)/(1-(path.maxBeta??beta)));
   const times=[far];
   if(oldest>path.entryTime){
     const end=Math.min(oldest,path.exitTime), count=path.count*128;
@@ -89,7 +90,8 @@ export class Simulation {
     this.config = {mode: 'drag', beta: .9, amplitude: 1, periods: 3, viewWidth: 12, viewHeight: 9, edgeMargin: .2, K: 1, density: 72, ...this.config, ...config};
     this.config.beta = Math.max(.05, Math.min(.995, this.config.beta));
     this.config.amplitude = Math.max(.15, this.config.amplitude);
-    this.path = this.config.mode === 'wiggler' ? createTravelingPath(this.config) : null;
+    this.path = this.config.mode === 'wiggler' ? createTravelingPath(this.config)
+      : this.config.mode === 'cavity' ? createCavityPath(this.config) : null;
     this.time = 0;
     this.accumulator = 0;
     this.particle = { x: 0, y: 0, vx: 0, vy: 0, px: 0, py: 0 };

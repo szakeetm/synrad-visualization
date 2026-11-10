@@ -1,8 +1,10 @@
 import { DIPOLE_ANGLE, dipoleFieldTail, travelingFieldTail, dipolePassDuration, dipoleState } from './physics.js';
+import {drawCavityPattern} from './cavity-scene.js';
 // GPL-3.0-only. Geometry comes from the wavelet history, not a decorative trail.
 export class Renderer {
-  constructor(canvas) {
+  constructor(canvas, patternCanvas=null) {
     this.canvas = canvas;
+    this.patternCanvas = patternCanvas;
     this.ctx = canvas.getContext('2d', {alpha: false});
     this.resize();
   }
@@ -41,7 +43,15 @@ export class Renderer {
       ctx.strokeStyle='#a8bd6c35';ctx.setLineDash([3,6]);ctx.beginPath();
       ctx.moveTo(left,60);ctx.lineTo(left,h-70);ctx.moveTo(right,60);ctx.lineTo(right,h-70);ctx.stroke();ctx.setLineDash([]);
       ctx.fillStyle='#8ca079';ctx.font='9px monospace';ctx.textAlign='center';
-      ctx.fillText('MAGNETIC REGION',w/2,80);
+      ctx.fillText(sim.config.mode==='cavity'?'VIRTUAL ACCELERATING CAVITY · E →':'MAGNETIC REGION',w/2,80);
+      if(sim.config.mode==='cavity'){
+        ctx.strokeStyle='#f0ca8260';ctx.lineWidth=1;
+        for(let x=left+24;x<right-10;x+=45){
+          const y=h/2+45;
+          ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+18,y);
+          ctx.lineTo(x+13,y-4);ctx.moveTo(x+18,y);ctx.lineTo(x+13,y+4);ctx.stroke();
+        }
+      }
     }
     const history = sim.history;
     if (options.wave) {
@@ -101,6 +111,16 @@ export class Renderer {
     ctx.strokeStyle='#edffd855';ctx.lineWidth=1;ctx.beginPath();ctx.arc(x,y,9,0,Math.PI*2);ctx.stroke();
     if(options.target) {
       ctx.strokeStyle='#d3e4b866';ctx.setLineDash([2,3]);ctx.beginPath();ctx.arc(sx(options.target.x),sy(options.target.y),12,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+    }
+    if(sim.config.mode==='cavity'&&this.patternCanvas){
+      const canvas=this.patternCanvas, width=canvas.getBoundingClientRect().width;
+      if(canvas.width!==Math.round(width*this.dpr)||canvas.height!==Math.round(210*this.dpr)){
+        canvas.width=Math.round(width*this.dpr);canvas.height=Math.round(210*this.dpr);
+      }
+      const pattern=canvas.getContext('2d');
+      pattern.setTransform(this.dpr,0,0,this.dpr,0,0);
+      pattern.fillStyle='#061014';pattern.fillRect(0,0,width,210);
+      drawCavityPattern(pattern,sim,width);
     }
   }
 }

@@ -5,3 +5,6 @@
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 
 .repeat-note{font-size:10px;line-height:1.65;color:var(--muted);margin:4px 0 16px}
+
+.mode[data-mode=cavity]{grid-column:1/-1}.mode[data-mode=cavity] small{white-space:normal}
+#cavity-pattern{display:block;width:100%;height:210px;border-radius:8px;margin-top:12px;background:#061014}

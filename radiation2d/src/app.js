@@ -2,13 +2,14 @@ import { Simulation, STEP } from './physics.js';
 import { Renderer } from './renderer.js';
 const $ = id => document.getElementById(id);
 const canvas = $('field-canvas');
-const renderer = new Renderer(canvas);
+const renderer = new Renderer(canvas,$('cavity-pattern'));
 const sim = new Simulation();
 const descriptions = {
   drag: ['FREE DRAG', '01 / EXPLORE BY HAND', 'A ripple starts with a little motion.', 'Drag the charge and watch the bend in its electric field travel outward. Changes propagate at the speed of light; the distant field learns about the motion later.'],
   oscillator: ['OSCILLATOR', '02 / DIPOLE RADIATION', 'Back and forth. Out into the world.', 'An oscillating charge sends alternating bends through its electric field. This single-charge motion demonstrates dipole radiation. At low speeds, radiation is strongest perpendicular to the oscillation axis; relativistic motion changes the angular pattern.'],
   dipole: ['DIPOLE MAGNET', '03 / A SINGLE BEND', 'One bend. A pulse of radiation.', 'The charge enters on a straight path, turns through a 30° bending magnet, then leaves tangentially. Repeat pass waits until the charge has left the screen, then replays with fresh field history; it does not teleport the charge within a physical trajectory.'],
   wiggler: ['WIGGLER', '04 / PERIODIC DEFLECTION', 'Turn up the bend.', 'Stronger deflections sweep radiation over a wider angle. The magnetic region spans the middle half of the screen, with straight entry and exit paths. Repeat pass starts a fresh demonstration after the charge reaches the right edge.'],
+  cavity: ['ACCELERATING CAVITY', '05 / LONGITUDINAL ACCELERATION', 'Accelerate straight. Beam forward.', 'An ideal virtual cavity applies a constant force along the motion. The charge gains energy without bending. The radiation pattern narrows around +x as γ rises: a hollow forward cone with zero intensity exactly on axis. The diagram below compares the instantaneous rest frame and lab frame; each polar curve has its own unit peak, with radial length proportional to dP/dΩ per source time. In the straight drifts acceleration and radiation are zero.'],
 };
 const options = {field:true, wave:false, trail:true, target:null};
 let running = !matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -16,13 +17,21 @@ let previous = null, pointerId = null, pointerScreen = null, lastReadout = 0;
 let keyboardTarget = null;
 
 function syncParameters() {
-  const mode=sim.config.mode, traveling=mode==='wiggler';
+  const mode=sim.config.mode, traveling=mode==='wiggler', cavity=mode==='cavity';
   $('drag-note').hidden = mode !== 'drag';
   $('beta-row').hidden = mode==='drag';
   $('gamma-note').hidden = mode==='drag';
   $('size-row').hidden = !['oscillator','dipole'].includes(mode);
-  $('repeat-row').hidden = mode !== 'dipole' && !traveling;
-  $('repeat-note').hidden = mode !== 'dipole' && !traveling;
+  $('repeat-row').hidden = mode !== 'dipole' && !traveling && !cavity;
+  $('repeat-note').hidden = mode !== 'dipole' && !traveling && !cavity;
+  $('gain-row').hidden = !cavity;
+  $('beta-label').textContent=cavity?'Entrance speed':'Speed';
+  $('gain').value=sim.config.gain??8;
+  $('gain-value').textContent=(sim.config.gain??8).toFixed(1);
+  $('cavity-note').hidden=!cavity;
+  $('cavity-pattern').hidden=!cavity;
+  $('gamma-label').textContent=cavity?'Entrance Lorentz factor':'Lorentz factor';
+  if(cavity)$('cavity-note').textContent=`γ: ${sim.path.initialGamma.toFixed(2)} → ${sim.path.finalGamma.toFixed(2)}. Ideal uniform accelerating force; no RF phase or fringe fields.`;
   $('strength-row').hidden = !traveling; $('period-row').hidden = !traveling;
   // Keep K physically reachable at fixed total speed and leave forward momentum.
   const gamma=1/Math.sqrt(1-sim.config.beta**2);
@@ -62,6 +71,7 @@ function setMode(mode) {
   const config={mode};
   if(mode==='dipole')Object.assign(config,{beta:.9,amplitude:1.25});
   if(traveling)Object.assign(config,{beta:.98,K:3});
+  if(mode==='cavity')Object.assign(config,{beta:.8,gain:8});
   restart(config);
 }
 function updateReadout() {
@@ -100,7 +110,7 @@ canvas.addEventListener('pointerup',releasePointer);
 canvas.addEventListener('pointercancel',releasePointer);
 canvas.addEventListener('lostpointercapture',releasePointer);
 document.querySelectorAll('[data-mode]').forEach(button=>button.addEventListener('click',()=>setMode(button.dataset.mode)));
-for(const [id,key] of [['beta','beta'],['size','amplitude'],['strength','K'],['period','periods']]) {
+for(const [id,key] of [['beta','beta'],['size','amplitude'],['strength','K'],['period','periods'],['gain','gain']]) {
   $(id).addEventListener('input',()=>restart({[key]:Number($(id).value)}));
 }
 $('density').addEventListener('change',()=>restart({density:Number($('density').value)}));
