@@ -1,4 +1,4 @@
-import {gamma, criticalEnergy, spectrum, vertical, reflectivity, criticalAngle, attenuation, transmission, specularFraction, undulatorEnergy, sinc, harmonicCoupling} from './physics.js';
+import {gamma, criticalEnergy, spectrum, vertical, reflectivity, criticalAngle, attenuation, transmission, specularFraction, undulatorEnergy, sinc, harmonicCoupling, dipoleProperties, quadrupoleProperties, quadrupoleSourceDensity, angularPolarization} from './physics.js';
 
 export const colors = { cyan: '#208f86', amber: '#d69b4b', purple: '#9884c3', grey: '#b6c6c6' };
 const sample = (a,b,n,fn) => Array.from({length:n+1},(_,i) => {const x=a+(b-a)*i/n; return [x,fn(x)];});
@@ -31,6 +31,22 @@ export function getView(id,s) {
       badge:'DIRECTIONAL ABERRATION',caption:'Dipole angular photon distribution per solid angle, each curve normalized to its own peak. This compares directions, not radiation power or Doppler-shifted photon energy.',
       legend:[['Particle frame','#b5a0ff'],['Lab frame','#55d9d0']],note:'θ′ and θ are measured from forward motion. γ here is separate from the GeV energy used in other experiments.'});
   }
+  if(id==='polarization'&&s.polarizationModel==='angular') {
+    const isVertical=s.cut!=='horizontal', fixed=isVertical?s.theta:s.psi;
+    const vals=sample(-3,3,360,a=>angularPolarization(isVertical?fixed:a,isVertical?a:fixed));
+    const ray=angularPolarization(s.theta,s.psi);
+    return base(isVertical?'Vertical angular slice · σ and π':'Horizontal angular slice · σ and π',isVertical?'Scaled vertical angle · γθy':'Scaled horizontal angle · γθx',[-3,3],[
+      metric('All-angle σ / π power','87.5% / 12.5%'),
+      metric('Selected ray · σ share',ray.total>1e-15?percent(ray.sigma/ray.total):'Dark direction'),
+      metric('Selected ray · π share',ray.total>1e-15?percent(ray.pi/ray.total):'Dark direction'),
+      metric(isVertical?'Fixed horizontal γθx':'Fixed vertical γθy',fmt(fixed))],{
+      traces:[trace('Parallel · σ',colors.cyan,vals.map(([x,v])=>[x,v.sigma])),trace('Perpendicular · π',colors.amber,vals.map(([x,v])=>[x,v.pi])),trace('Total',colors.grey,vals.map(([x,v])=>[x,v.total]),true)],
+      markers:[{x:isVertical?s.psi:s.theta,label:'Selected direction',color:colors.purple}],
+      badge:'LOCAL · ENERGY-INTEGRATED',yLabel:'Power / solid angle (relative)',
+      caption:'Frequency-integrated local angular power. One common normalization: total at θx = θy = 0 equals 1. Neither components nor slices are independently peak-normalized. Maps use a shared logarithmic color scale.',
+      legend:[['σ · parallel','#55d9d0'],['π · perpendicular','#f5bc70'],['Selected ray','#b5a0ff']],
+      note:'u = γθx and v = γθy. Local transverse acceleration, γ ≫ 1. The all-angle 7/8 : 1/8 split does not describe an individual ray.'});
+  }
   if(id==='vertical'||id==='polarization') {
     const r=s.ratio,limit=Math.max(3,2.8/Math.cbrt(r));
     const vals=sample(-limit,limit,320,u=>vertical(u,r));
@@ -43,7 +59,8 @@ export function getView(id,s) {
       markers:id==='polarization'?[{x:s.psi,label:'Your view',color:colors.purple}]:[],
       badge:'SINGLE ELECTRON',caption:'Energy-resolved Bessel-function components with one common normalization to the peak total intensity. Softer photons occupy a wider cone.',
       legend:id==='polarization'?[['Parallel E-field','#55d9d0'],['Perpendicular E-field','#f5bc70']]:[['Radiation cone','#55d9d0'],['Observation screen','#f5bc70']],
-      note:'σ and π refer to the orbit plane. Numerical integrals of K₁⁄₃ and K₂⁄₃ determine the curves.'});
+      equation:id==='polarization'?'Eσ ∝ (1 + q²)K₂⁄₃(ξ); Eπ ∝ i q√(1 + q²)K₁⁄₃(ξ); q = γθy':undefined,
+      note:'σ and π refer to the orbit plane. Numerical integrals of K₁⁄₃ and K₂⁄₃ determine the curves. This energy-resolved long-bend model differs from the local angular maps.'});
   }
   if(id==='horizontal') {
     const width=s.bend*s.distance, sigma=s.distance*1000/g,limit=width*.65+4*sigma;
@@ -75,6 +92,29 @@ export function getView(id,s) {
       traces:[trace('Rough copper surface',colors.cyan,sample(0,3,300,z=>r*specularFraction(s.photon,s.grazing,z))),trace('Perfectly smooth',colors.grey,[[0,r],[3,r]],true)],
       markers:[{x:s.roughness,label:'Your surface',color:colors.amber}],badge:'COHERENT REFLECTION',yLabel:'Specular reflectivity',caption:'The plot predicts specular suppression only. The scene’s scattered directions are qualitative; no diffuse-reflection probability or BSDF is calculated.',
       legend:[['Incident','#55d9d0'],['Specular','#f5bc70'],['Scattering schematic','#b5a0ff']],note:'RMS roughness is a height, not a surface slope. Correlation length is needed to predict a real scattering distribution.'});
+  }
+  if(id==='dipole') {
+    const d=dipoleProperties(E,s.field,s.length,s.current),ref=.665*.2*E**2;
+    const lo=10**Math.floor(Math.log10(Math.min(d.criticalKeV||ref,ref)*.005)),hi=10**Math.ceil(Math.log10(Math.max(d.criticalKeV,ref)*20));
+    return base('The spectrum from a uniform bend','Photon energy (keV)',[lo,hi],[
+      metric('Bending radius',s.field===0?'∞ · straight':`${fmt(d.radius)} m`),metric('Bend angle',`${fmt(d.bendMrad)} mrad`),metric('Critical energy',`${fmt(d.criticalKeV,3)} keV`),metric('Single-magnet power',`${fmt(d.powerKW)} kW`)],{
+      logX:true,badge:'UNIFORM FIELD',yLabel:'Spectral power (relative peak)',
+      traces:[trace(`${fmt(s.field)} T dipole`,colors.cyan,logSample(lo,hi,450,x=>s.field===0?0:spectrum(x/d.criticalKeV)/.918)),trace('0.2 T reference',colors.grey,logSample(lo,hi,450,x=>spectrum(x/ref)/.918),true)],
+      markers:s.field===0?[]:[{x:d.criticalKeV,label:`Ec · ${fmt(d.criticalKeV)} keV`,color:colors.amber}],
+      caption:'Universal spectral shape normalized to its peak; the readout gives absolute single-magnet power. Zero field gives zero radiation. The reference keeps electron energy fixed at a 0.2 T field.',
+      legend:[['Electron orbit','#55d9d0'],['Tangential photons','#f5bc70'],['Magnetic field','#b5a0ff']],note:'Magnetic rigidity uses p ≈ E/c for ultrarelativistic electrons. Δθ = L/ρ. At fixed B, Ec ∝ E² and power ∝ E² B² I L.'});
+  }
+  if(id==='quadrupole') {
+    const q=quadrupoleProperties(E,s.gradient,s.sigma,s.offset,s.length),lim=Math.abs(s.offset)+4*s.sigma;
+    const power=sample(-lim,lim,500,x=>quadrupoleSourceDensity(x,s.gradient,s.sigma,s.offset));
+    const max=Math.max(...power.map(p=>p[1]))||1;
+    return base('Where the quadrupole radiation originates','Horizontal position from magnetic center (mm)',[-lim,lim],[
+      metric('Entrance RMS field',`${fmt(q.rmsField,4)} T`),metric('Ec at RMS field · indicative',`${fmt(q.criticalKeV,3)} keV`),metric('Frozen-beam power · 100 mA',`${fmt(q.powerKW*1000)} W`),metric('Assumed σx = σy',`${fmt(s.sigma)} mm`)],{
+      traces:[trace('Power-weighted source density',colors.cyan,power.map(([x,y])=>[x,y/max])),trace('Particle density',colors.grey,sample(-lim,lim,500,x=>Math.exp(-.5*((x-s.offset)/s.sigma)**2)),true)],
+      markers:[{x:0,label:'Magnetic center',color:colors.amber},{x:s.offset,label:'Beam centroid',color:colors.purple}],badge:'ENTRANCE-PLANE MODEL',yLabel:'Each density / its own peak',
+      caption:'A round Gaussian beam weighted by B², integrated over y. Each trace has its own peak normalization. At x = 0 the projected source need not vanish: off-axis particles at nonzero y still radiate. Power holds the entrance distribution constant along the magnet.',
+      legend:[['Beam electrons','#55d9d0'],['Local radiation','#f5bc70'],['Magnetic field','#b5a0ff']],
+      note:'Ideal Bx = −Gy, By = −Gx. For this electron direction, Fx ∝ −x and Fy ∝ +y. Real power requires the changing beam envelope along z; RMS-field Ec is not an exact quadrupole spectrum.'});
   }
   if(id==='insertion') {
     const e1=undulatorEnergy(E,s.period,s.K),field=s.K/(.934*s.period/10),ecW=.665*field*E**2;

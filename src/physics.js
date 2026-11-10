@@ -2,6 +2,36 @@
 export const gamma = energyGeV => energyGeV / 0.00051099895;
 export const criticalEnergy = (energyGeV, radiusM) => 2.218 * energyGeV ** 3 / radiusM;
 
+export function dipoleProperties(energyGeV, fieldT, lengthM, currentMA) {
+  const radius = fieldT === 0 ? Infinity : energyGeV / (.2998 * Math.abs(fieldT));
+  return { radius, bendMrad: 1000 * lengthM / radius,
+    criticalKeV: .665 * Math.abs(fieldT) * energyGeV ** 2,
+    powerKW: 14.08 * energyGeV ** 4 / radius ** 2 * currentMA / 1000 * lengthM };
+}
+export function quadrupoleField(gradientTm, xMm, yMm) {
+  const bx = -gradientTm * yMm / 1000, by = -gradientTm * xMm / 1000;
+  return { bx, by, magnitude: Math.hypot(bx, by) };
+}
+export function quadrupoleProperties(energyGeV, gradientTm, sigmaMm, offsetMm, lengthM, currentMA = 100) {
+  // Round Gaussian, fixed transverse distribution: <r²> = 2 sigma² + offset².
+  const rmsField = Math.abs(gradientTm) * Math.sqrt(2 * sigmaMm ** 2 + offsetMm ** 2) / 1000;
+  const dipole = dipoleProperties(energyGeV, rmsField, lengthM, currentMA);
+  return { rmsField, criticalKeV: dipole.criticalKeV, powerKW: dipole.powerKW };
+}
+export function quadrupoleSourceDensity(xMm, gradientTm, sigmaMm, offsetMm) {
+  // Integrate B² times round Gaussian over y, leaving T²/mm along magnetic x.
+  return gradientTm ** 2 * (xMm ** 2 + sigmaMm ** 2) * 1e-6
+    * Math.exp(-.5 * ((xMm - offsetMm) / sigmaMm) ** 2) / (Math.sqrt(2 * Math.PI) * sigmaMm);
+}
+export function angularPolarization(u, v) {
+  // Frequency-integrated local radiation per solid angle, ultrarelativistic
+  // transverse acceleration along x. Normalization: total at u=v=0 equals 1.
+  const denom = (1 + u * u + v * v) ** 5;
+  const sigma = (1 - u * u + v * v) ** 2 / denom;
+  const pi = 4 * u * u * v * v / denom;
+  return { sigma, pi, total: sigma + pi };
+}
+
 // Integral representations of K_nu and x integral_x^infinity K_5/3(t) dt.
 // Simpson quadrature with an exponentially suppressed tail (< exp(-45)).
 function integral(x, fn) {

@@ -3,6 +3,8 @@ import {getView,fmt} from './views.js';
 import {drawChart} from './chart.js';
 import {renderSource} from './source-scenes.js';
 import {renderMaterial} from './material-scenes.js';
+import {renderMagnet} from './magnet-scenes.js';
+import {renderPolarization} from './polarization-scenes.js';
 
 const $=id=>document.getElementById(id);
 const states=Object.fromEntries(experiments.map(e=>[e.id,Object.fromEntries(e.controls.map(c=>[c.key,c.default]))]));
@@ -25,7 +27,7 @@ function select(id) {
   canvas.setAttribute('aria-label',`${selected.short}: ${selected.description} Geometry is schematic; the plot below contains physical units.`);
   const controls=$('controls');controls.replaceChildren();
   for(const c of selected.controls) {
-    const box=document.createElement('div');box.className='control';
+    const box=document.createElement('div');box.className='control';box.dataset.controlKey=c.key;
     const label=document.createElement('label');label.htmlFor=`control-${c.key}`;label.textContent=c.label;
     let input;
     if(c.options){input=document.createElement('select');for(const o of c.options){const option=document.createElement('option');option.value=o.value;option.textContent=o.label;input.append(option);}}
@@ -39,14 +41,15 @@ function select(id) {
 function legend(container,items){container.replaceChildren();for(const [label,color]of items){const span=document.createElement('span');span.className='legend-key';const i=document.createElement('i');i.style.setProperty('--key',color);span.append(i,document.createTextNode(label));container.append(span);}}
 function update() {
   const state=states[selected.id];
+  for(const c of selected.controls){const box=$(`control-${c.key}`).closest('.control');box.hidden=!!c.showWhen&&state[c.showWhen.key]!==c.showWhen.value;}
   for(const c of selected.controls)if(!c.options){const value=state[c.key];const decimals=String(c.step).split('.')[1]?.length??0;set(`value-${c.key}`,`${fmt(value,decimals)} ${c.unit}`.trim());$(`control-${c.key}`).setAttribute('aria-valuetext',`${value} ${c.unit}`);}
   const view=getView(selected.id,state);
-  set('chart-title',view.title);set('chart-badge',view.badge);set('chart-caption',view.caption);set('equation-note',view.note);drawChart($('chart'),view);
+  set('chart-title',view.title);set('chart-badge',view.badge);set('chart-caption',view.caption);set('equation',view.equation??selected.equation);set('equation-note',view.note);drawChart($('chart'),view);
   legend($('chart-legend'),view.traces.map(t=>[t.name,t.color]));legend($('scene-legend'),view.legend);
   $('metrics').replaceChildren(...view.metrics.map(m=>{const div=document.createElement('div');div.className='metric';const name=document.createElement('span');name.className='metric-name';name.textContent=m.name;const value=document.createElement('span');value.className='metric-value';value.textContent=m.value;div.append(name,value);return div;}));
   draw();
 }
-function draw(){ctx.clearRect(0,0,900,400);ctx.fillStyle='#101d29';ctx.fillRect(0,0,900,400);ctx.strokeStyle='#7a9eab0b';ctx.lineWidth=1;for(let x=0;x<900;x+=30){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,400);ctx.stroke();}for(let y=0;y<400;y+=30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(900,y);ctx.stroke();}renderSource(ctx,900,400,selected.id,states[selected.id],time)||renderMaterial(ctx,900,400,selected.id,states[selected.id],time);}
+function draw(){ctx.clearRect(0,0,900,400);ctx.fillStyle='#101d29';ctx.fillRect(0,0,900,400);ctx.strokeStyle='#7a9eab0b';ctx.lineWidth=1;for(let x=0;x<900;x+=30){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,400);ctx.stroke();}for(let y=0;y<400;y+=30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(900,y);ctx.stroke();}renderPolarization(ctx,900,400,selected.id,states[selected.id],time)||renderMagnet(ctx,900,400,selected.id,states[selected.id],time)||renderSource(ctx,900,400,selected.id,states[selected.id],time)||renderMaterial(ctx,900,400,selected.id,states[selected.id],time);}
 function setPaused(value){paused=value;$('pause').textContent=paused?'▶ Play':'Ⅱ Pause';$('pause').setAttribute('aria-pressed',String(paused));set('scene-label',paused?'EXPERIMENT PAUSED':'LIVE EXPERIMENT');}
 $('pause').addEventListener('click',()=>setPaused(!paused));
 $('reset').addEventListener('click',()=>{states[selected.id]=Object.fromEntries(selected.controls.map(c=>[c.key,c.default]));if('energy'in states[selected.id])sharedEnergy=3;select(selected.id);});

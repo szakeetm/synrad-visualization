@@ -40,3 +40,19 @@ test('weak-deflection higher undulator harmonics vanish relative to the fundamen
   const atHarmonic = n => Math.max(...view.traces[0].points.filter(([x]) => Math.abs(x / e1 - n) < .03).map(p => p[1]));
   assert.ok(atHarmonic(3) / atHarmonic(1) < .001);
 });
+test('source tabs expose finite plots and the zero-field dipole emits no spectrum', () => {
+  assert.ok(experiments.find(e=>e.id==='dipole'));
+  assert.ok(experiments.find(e=>e.id==='quadrupole'));
+  const zero=getView('dipole',{energy:3,field:0,length:1,current:100});
+  assert.ok(zero.traces[0].points.every(([,y])=>y===0));
+});
+test('polarization angular cuts keep one common scale and respect pi nodal axes', () => {
+  const origin=getView('polarization',{polarizationModel:'angular',cut:'vertical',theta:0,psi:0,ratio:1});
+  assert.ok(origin.traces[1].points.every(([,y])=>y===0));
+  const offaxis=getView('polarization',{polarizationModel:'angular',cut:'vertical',theta:.7,psi:.5,ratio:1});
+  assert.ok(offaxis.traces[1].points.some(([,y])=>y>0));
+  assert.equal(offaxis.traces[1].points.find(([x])=>x===0)[1],0);
+  assert.match(origin.caption,/integrated/i);
+  const spectral=getView('polarization',{polarizationModel:'spectral',cut:'vertical',theta:0,psi:0,ratio:1});
+  assert.match(spectral.caption,/resolved/i);
+});

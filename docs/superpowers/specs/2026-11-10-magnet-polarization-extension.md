@@ -1,0 +1,9 @@
+# Magnet sources and angular polarization
+
+User requests dipole and quadrupole source tabs and angular distributions of the two polarization components. Extend the established teaching-lab design, preserving credits, static architecture and existing interactions.
+
+Add two source tabs before insertion devices. Dipole controls: electron energy GeV, field T, length m, current mA. Derive magnetic rigidity, bend, Ec and single-magnet power. Plot the SR spectrum with energy units. Quadrupole controls: electron energy, gradient T/m, round-beam RMS size mm, horizontal offset mm, length m. Use Bx=-Gy, By=-Gx. Plot entrance-plane horizontal radiation source density: Gaussian particle density times G²[(x+offset)²+sigma²]. Readouts give entrance-plane RMS field, effective Ec and frozen-beam power for 100 mA; explicitly omit beam-envelope evolution from that estimate. Diagram shows quadrupole field and transverse forces; no claims of calibrated downstream footprint.
+
+Polarization defaults to three common-scale 2D angular-power maps sigma, pi and sum for an ultrarelativistic local transverse acceleration. u=gamma*theta_x, v=gamma*theta_y, sigma=(1-u²+v²)²/(1+u²+v²)^5, pi=4u²v²/(1+u²+v²)^5. Show crosshair ray selection and horizontal/vertical slice plots. These frequency-integrated local maps have integrated sigma/pi power fractions 7/8 and 1/8; do not apply those fractions to individual rays or energy-selected light. Retain the energy-resolved Bessel/ellipse view as a second mode, clearly distinguishing long-bend spectral distribution from the local angular pattern. Shared logarithmic map scale and common linear plot normalization preserve relative intensities.
+
+Alternative considered: only add more 1D traces to the existing ellipse. Chosen maps expose horizontal structure and four perpendicular lobes in lecture slide 18, which 1D vertical curves alone cannot show. Source models follow slides 25–27. Geometry and time remain schematic.
