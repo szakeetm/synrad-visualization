@@ -41,3 +41,12 @@ low-energy comparisons. The chart uses µrad; scene and metrics compare the
 scale, with enlarged marker size explicitly labeled. High-γ peak calculation
 uses a stable half-angle expression. Regression tests cover default clearance,
 energy conversion, high-energy motion and angular units.
+
+## Follow-up: frame lobes
+
+Replaced the lower angular plot on the cavity tab with two shaded 3D angular
+power surfaces: instantaneous particle frame and lab frame at entrance energy.
+Both are independently peak-normalized. The lab surface labels its transverse
+magnification so the real high-γ cone remains interpretable. No plot axis
+controls appear on this lobe comparison; other plots keep Lin/Log controls.
+Zero-gain surfaces are explicitly labelled as reference shapes.

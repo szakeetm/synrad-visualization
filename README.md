@@ -85,8 +85,12 @@ The default is 45.6 GeV with 20 MeV gain and a 25 mm aperture radius. Its
 longitudinal power peaks at about 5.6 µrad, a free-space offset of 5.6 µm
 after 1 m. All displayed default packets clear the cavity; percentages are
 finite-sample estimates, not proof of zero radiation in the angular tails.
-The angular chart uses µrad and the drawing labels micrometre-scale spread
-against the millimetre-scale aperture. Packet centers retain true geometry;
+The lower panel compares shaded longitudinal radiation lobes in the
+instantaneous particle frame and lab frame at the entrance energy. Each
+surface radius is independently peak-normalized angular power. The lab
+surface has an explicitly labelled transverse magnification to reveal the
+otherwise subpixel cone; it is not a photon trajectory. The packet drawing
+labels micrometre-scale spread against the millimetre-scale aperture. Packet centers retain true geometry;
 dot sizes are enlarged for visibility. A logarithmic energy slider and low
 energy presets retain broad-angle comparisons. Electron rest energy is
 [0.51099895069 MeV, CODATA 2022](https://physics.nist.gov/cgi-bin/cuu/Value?mec2mev).

@@ -7,6 +7,7 @@ import {renderMagnet} from './magnet-scenes.js';
 import {renderPolarization} from './polarization-scenes.js';
 import {controlPosition,controlValue} from './controls.js';
 import {renderCavity} from './cavity-scene.js';
+import {drawCavityLobes} from './cavity-lobes.js';
 
 const $=id=>document.getElementById(id);
 const states=Object.fromEntries(experiments.map(e=>[e.id,Object.fromEntries(e.controls.map(c=>[c.key,c.default]))]));
@@ -51,10 +52,14 @@ function update() {
   for(const c of selected.controls){const box=$(`control-${c.key}`).closest('.control');box.hidden=!!c.showWhen&&state[c.showWhen.key]!==c.showWhen.value;}
   for(const c of selected.controls)if(!c.options){const value=state[c.key];const decimals=String(c.step).split('.')[1]?.length??0;set(`value-${c.key}`,`${fmt(value,decimals)} ${c.unit}`.trim());const input=$(`control-${c.key}`);input.setAttribute('aria-valuetext',`${fmt(value,decimals)} ${c.unit}`);if(c.scale){input.setAttribute('aria-valuemin',c.min);input.setAttribute('aria-valuemax',c.max);input.setAttribute('aria-valuenow',value);}}
   const sourceView=getView(selected.id,state),view=prepareChartScales(sourceView,plotScales[selected.id]);
+  const lobes=selected.id==='cavity';
+  document.querySelector('.chart-scale-controls').hidden=lobes;
+  $('chart-legend').hidden=lobes;
   for(const axis of ['x','y'])for(const scale of ['linear','log'])$(`${axis}-${scale}`).setAttribute('aria-pressed',String((axis==='x'?view.logX:view.logY)===(scale==='log')));
   const signed=sourceView.xRange[0]<0;$('x-log').textContent=signed?'Sym log':'Log';
   set('chart-scale-note',view.symlogX?'Sym log keeps ± angles and zero; linear near zero.':view.logX&&sourceView.xRange[0]===0?'X = 0 is omitted on a log axis.':'');
-  set('chart-title',view.title);set('chart-badge',view.badge);set('chart-caption',view.caption);set('equation',view.equation??selected.equation);set('equation-note',view.note);drawChart($('chart'),view);
+  set('chart-title',lobes?'Particle frame and laboratory frame':view.title);set('chart-badge',lobes?'LONGITUDINAL LOBES':view.badge);set('chart-caption',lobes?'Instantaneous comparison at the entrance energy. Surface radius represents angular power, independently normalized to each frame’s peak. The lab surface uses the labelled transverse magnification; these surfaces are not photon paths. At zero energy gain both are reference shapes, with radiation off.':view.caption);set('equation',view.equation??selected.equation);set('equation-note',view.note);
+  if(lobes)drawCavityLobes($('chart'),state);else drawChart($('chart'),view);
   legend($('chart-legend'),view.traces.map(t=>[t.name,t.color]));legend($('scene-legend'),view.legend);
   $('metrics').replaceChildren(...view.metrics.map(m=>{const div=document.createElement('div');div.className='metric';const name=document.createElement('span');name.className='metric-name';name.textContent=m.name;const value=document.createElement('span');value.className='metric-value';value.textContent=m.value;div.append(name,value);return div;}));
   draw();
