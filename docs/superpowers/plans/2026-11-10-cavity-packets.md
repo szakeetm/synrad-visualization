@@ -31,3 +31,13 @@ Standalone Synrad2D remains separate and externally linked.
 
 Deployment: both repositories are published independently; the teaching lab
 links to standalone Radiation2D rather than bundling it.
+
+## Follow-up: realistic beam energy
+
+Default changed from a modest demonstration γ to 45.6 GeV total electron
+energy, with 20 MeV gain and 25 mm pipe radius. Logarithmic GeV control retains
+low-energy comparisons. The chart uses µrad; scene and metrics compare the
+5.6 µm/m longitudinal peak spread with the aperture. Paths remain at true
+scale, with enlarged marker size explicitly labeled. High-γ peak calculation
+uses a stable half-angle expression. Regression tests cover default clearance,
+energy conversion, high-energy motion and angular units.

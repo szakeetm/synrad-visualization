@@ -35,10 +35,11 @@ function select(id) {
     const label=document.createElement('label');label.htmlFor=`control-${c.key}`;label.textContent=c.label;
     let input;
     if(c.options){input=document.createElement('select');for(const o of c.options){const option=document.createElement('option');option.value=o.value;option.textContent=o.label;input.append(option);}}
-    else {const output=document.createElement('output');output.id=`value-${c.key}`;output.htmlFor=`control-${c.key}`;label.append(output);input=document.createElement('input');input.type='range';input.min=c.scale==='rapidity'?0:c.min;input.max=c.scale==='rapidity'?1000:c.max;input.step=c.scale==='rapidity'?1:c.step;}
+    else {const output=document.createElement('output');output.id=`value-${c.key}`;output.htmlFor=`control-${c.key}`;label.append(output);input=document.createElement('input');input.type='range';input.min=c.scale?0:c.min;input.max=c.scale?1000:c.max;input.step=c.scale?1:c.step;}
     input.id=`control-${c.key}`;input.value=c.options?states[selected.id][c.key]:controlPosition(states[selected.id][c.key],c);box.append(label,input);
     if(!c.options){const limits=document.createElement('div');limits.className='range-limits';limits.innerHTML=`<span>${c.min} ${c.unit}</span><span>${c.max} ${c.unit}</span>`;box.append(limits);}
     if(c.scale==='rapidity'){const hint=document.createElement('p');hint.className='control-hint';hint.textContent='Fine control near γ = 1';box.append(hint);}
+    if(c.scale==='log'){const hint=document.createElement('p');hint.className='control-hint';hint.textContent='Logarithmic energy slider · presets include 45.6 GeV';box.append(hint);}
     if(c.presets){const presets=document.createElement('div');presets.className='control-presets';presets.setAttribute('aria-label',`${c.label} presets`);for(const value of c.presets){const button=document.createElement('button');button.type='button';button.textContent=String(value);button.setAttribute('aria-label',`Set ${c.label.toLowerCase()} to ${value} ${c.unit}`);button.addEventListener('click',()=>{states[selected.id][c.key]=value;input.value=controlPosition(value,c);if(c.key==='energy')sharedEnergy=value;update();});presets.append(button);}box.append(presets);}
     input.addEventListener('input',()=>{const value=c.options?input.value:controlValue(Number(input.value),c);states[selected.id][c.key]=value;if(c.key==='energy')sharedEnergy=value;update();});controls.append(box);
   }
@@ -48,7 +49,7 @@ function legend(container,items){container.replaceChildren();for(const [label,co
 function update() {
   const state=states[selected.id];
   for(const c of selected.controls){const box=$(`control-${c.key}`).closest('.control');box.hidden=!!c.showWhen&&state[c.showWhen.key]!==c.showWhen.value;}
-  for(const c of selected.controls)if(!c.options){const value=state[c.key];const decimals=String(c.step).split('.')[1]?.length??0;set(`value-${c.key}`,`${fmt(value,decimals)} ${c.unit}`.trim());const input=$(`control-${c.key}`);input.setAttribute('aria-valuetext',`${fmt(value,decimals)} ${c.unit}`);if(c.scale==='rapidity'){input.setAttribute('aria-valuemin',c.min);input.setAttribute('aria-valuemax',c.max);input.setAttribute('aria-valuenow',value);}}
+  for(const c of selected.controls)if(!c.options){const value=state[c.key];const decimals=String(c.step).split('.')[1]?.length??0;set(`value-${c.key}`,`${fmt(value,decimals)} ${c.unit}`.trim());const input=$(`control-${c.key}`);input.setAttribute('aria-valuetext',`${fmt(value,decimals)} ${c.unit}`);if(c.scale){input.setAttribute('aria-valuemin',c.min);input.setAttribute('aria-valuemax',c.max);input.setAttribute('aria-valuenow',value);}}
   const sourceView=getView(selected.id,state),view=prepareChartScales(sourceView,plotScales[selected.id]);
   for(const axis of ['x','y'])for(const scale of ['linear','log'])$(`${axis}-${scale}`).setAttribute('aria-pressed',String((axis==='x'?view.logX:view.logY)===(scale==='log')));
   const signed=sourceView.xRange[0]<0;$('x-log').textContent=signed?'Sym log':'Log';

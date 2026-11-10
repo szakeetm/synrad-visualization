@@ -2,8 +2,12 @@
 // Angular power per source time: Fitzpatrick, eqs.1661–1666.
 // https://farside.ph.utexas.edu/teaching/em/lectures/node132.html
 const betaOf=g=>Math.sqrt(1-1/g**2);
+// CODATA 2022 electron rest energy (NIST), MeV.
+export const ELECTRON_REST_MEV=.51099895069;
 export function cavityPeak(g){
-  const b=betaOf(g);return Math.acos(5*b/(1+Math.sqrt(1+15*b*b)));
+  const b=betaOf(g),root=Math.sqrt(1+15*b*b);
+  // Half-angle form avoids subtracting two nearly equal cosines at GeV energies.
+  return 2*Math.asin(1/(g*Math.sqrt((1+b)*(root+1+3*b))));
 }
 export function cavityPattern(theta,g){
   const b=betaOf(g),peak=cavityPeak(g);
@@ -47,7 +51,8 @@ export function traceCavityRay(x,dx,dr,a){
 }
 let cacheKey,cache;
 export function createCavityModel(s){
-  const gammaIn=s.gammaIn??20,gain=s.gain??20,a=(s.aperture??25)/1000;
+  const gammaIn=s.gammaIn??((s.cavityEnergy??45.6)*1000/ELECTRON_REST_MEV);
+  const gain=s.gain??((s.gainMeV??20)/ELECTRON_REST_MEV),a=(s.aperture??25)/1000;
   const key=`${gammaIn}/${gain}/${a}`;if(key===cacheKey)return cache;
   const beta=betaOf(gammaIn),p0=gammaIn*beta,gammaOut=gammaIn+gain;
   const p1=Math.sqrt(gammaOut**2-1),betaOut=p1/gammaOut;
@@ -74,7 +79,8 @@ export function createCavityModel(s){
         distance:hit.distance,outcome:hit.outcome,hitX:hit.x,hitR:hit.r*side});
     }
   }
-  cacheKey=key;cache={state,packets,fractions:gain>0?fractions:null,a,gammaIn,gammaOut,entryTime,exitTime,
+  cacheKey=key;cache={state,packets,fractions:gain>0?fractions:null,a,gammaIn,gammaOut,gain,
+    energyGeV:gammaIn*ELECTRON_REST_MEV/1000,gainMeV:gain*ELECTRON_REST_MEV,entryTime,exitTime,
     cycle:exitTime+.3/betaOut+1.7,wall:cavityWall(a)};
   return cache;
 }

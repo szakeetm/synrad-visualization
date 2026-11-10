@@ -37,7 +37,7 @@ The numerical tests check critical-energy scaling, the universal spectrum, direc
 | Dipole | Electron energy, uniform field, magnet length, current | 3, 11, 25 |
 | Quadrupole | Electron energy, field gradient, round-beam size, offset, length | 26–27 |
 | Insertion devices | Electron energy, K, magnetic period, number of periods | 5, 28–29 |
-| Cavity radiation | Entrance γ, longitudinal energy gain, aperture radius, packet escape and wall interception | Extension of 13 |
+| Cavity radiation | Electron energy (default 45.6 GeV), cavity gain in MeV, aperture radius, packet escape and wall interception | Extension of 13 |
 
 ## Physics and limits
 
@@ -79,8 +79,19 @@ GPL-3.0-only; see [LICENSE](LICENSE). The separately maintained [Radiation 2D ap
 ## Cavity radiation packets
 
 The **Cavity radiation** tab (`#cavity`) follows equal-energy radiation packets
-through a 1 m virtual accelerating gap and short beam pipes. Entrance Lorentz
-factor, energy gain and aperture radius are adjustable. The electron follows
+through a 1 m virtual accelerating gap and short beam pipes. Entrance total
+electron energy (GeV), cavity gain (MeV) and aperture radius are adjustable.
+The default is 45.6 GeV with 20 MeV gain and a 25 mm aperture radius. Its
+longitudinal power peaks at about 5.6 µrad, a free-space offset of 5.6 µm
+after 1 m. All displayed default packets clear the cavity; percentages are
+finite-sample estimates, not proof of zero radiation in the angular tails.
+The angular chart uses µrad and the drawing labels micrometre-scale spread
+against the millimetre-scale aperture. Packet centers retain true geometry;
+dot sizes are enlarged for visibility. A logarithmic energy slider and low
+energy presets retain broad-angle comparisons. Electron rest energy is
+[0.51099895069 MeV, CODATA 2022](https://physics.nist.gov/cgi-bin/cuu/Value?mec2mev).
+A stable half-angle formula resolves the cone at high γ without subtracting
+nearly equal cosines. The electron follows
 constant longitudinal force; packets travel at c on straight paths, stopping
 at their first intersection with an axisymmetric absorbing wall. Upper/lower
 tracks represent meridional slices of radiation rings. Their angles are not

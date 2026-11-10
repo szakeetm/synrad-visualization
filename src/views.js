@@ -14,16 +14,26 @@ function erf(x) {const sign=Math.sign(x);x=Math.abs(x);const t=1/(1+.3275911*x);
 export function getView(id,s) {
   const E=s.energy??3, g=gamma(E), ec=criticalEnergy(E,s.rho??10);
   if(id==='cavity'){
-    const m=createCavityModel(s),limit=Math.min(180,cavityPeak(m.gammaIn)*720/Math.PI),active=m.fractions!==null;
+    const m=createCavityModel(s),limit=Math.min(Math.PI,cavityPeak(m.gammaIn)*4)*1e6,active=m.fractions!==null;
     const fraction=key=>m.fractions?`≈ ${percent(m.fractions[key])}`:'—';
-    return base('Angular power at the entrance and exit','Angle from forward direction (degrees)',[-limit,limit],[
-      metric('Entrance → exit γ',`${fmt(m.gammaIn)} → ${fmt(m.gammaOut)}`),
+    const angularPoints=g=>{
+      const peak=cavityPeak(g)*1e6,local=Math.min(limit,4*peak);
+      // Strong acceleration can put a very narrow exit cone inside a broad
+      // entrance range. Resolve each cone locally, including its exact peaks.
+      const angles=new Set([...sample(-limit,limit,600,x=>0).map(p=>p[0]),
+        ...sample(-local,local,400,x=>0).map(p=>p[0]),-peak,0,peak]);
+      return [...angles].sort((a,b)=>a-b).map(a=>[a,active?cavityPattern(a/1e6,g):0]);
+    };
+    return base('Angular power at the entrance and exit','Angle from forward direction (µrad)',[-limit,limit],[
+      metric('Entrance electron energy',`${fmt(m.energyGeV,6)} GeV`),
+      metric('Entrance → exit γ',`${m.gammaIn.toLocaleString('en-US',{maximumFractionDigits:0})} → ${m.gammaOut.toLocaleString('en-US',{maximumFractionDigits:0})}`),
+      metric('Peak spread per metre',`${fmt(Math.tan(cavityPeak(m.gammaIn))*1e6,2)} µm`),
       metric('Downstream port · energy',fraction('downstream')),
       metric('Wall interception · energy',fraction('wall')),
       metric('Upstream port · energy',fraction('upstream')),
-      metric('Exit peak angle',`${fmt(cavityPeak(m.gammaOut)*180/Math.PI,3)}°`)],{
-      traces:[trace('Entrance · unit peak',colors.cyan,sample(-limit,limit,600,a=>active?cavityPattern(a*Math.PI/180,m.gammaIn):0)),
-        trace('Exit · unit peak',colors.amber,sample(-limit,limit,600,a=>active?cavityPattern(a*Math.PI/180,m.gammaOut):0))],
+      metric('Exit peak angle',`${fmt(cavityPeak(m.gammaOut)*1e6,3)} µrad`)],{
+      traces:[trace('Entrance · unit peak',colors.cyan,angularPoints(m.gammaIn)),
+        trace('Exit · unit peak',colors.amber,angularPoints(m.gammaOut))],
       badge:active?'LONGITUDINAL ACCELERATION':'NO ACCELERATION',
       caption:'Power per solid angle and source time. Each curve is normalized to its own peak. The two peaks are a slice through a hollow cone; the forward axis is dark. At Δγ = 0 there is no radiation.',
       legend:[['Electron','#55d9d0'],['Radiation energy packets','#f5bc70'],['Wall interception','#b5a0ff']],

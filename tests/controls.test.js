@@ -22,3 +22,11 @@ test('linear controls retain their original values',()=>{
     assert.equal(controlPosition(value,{min:-3,max:100}),value);
   }
 });
+test('energy slider resolves MeV comparisons and returns exact GeV presets',()=>{
+  const c={min:.000516,max:182.4,scale:'log'};
+  assert.equal(controlValue(0,c),c.min);assert.equal(controlValue(1000,c),c.max);
+  for(const energy of [.001,.01,1,45.6,182.4]){
+    assert.ok(Math.abs(controlValue(controlPosition(energy,c),c)/energy-1)<1e-12);
+  }
+  assert.ok(controlValue(500,c)>.3&&controlValue(500,c)<.31);
+});

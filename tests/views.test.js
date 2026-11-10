@@ -4,6 +4,21 @@ import { experiments } from '../src/experiments.js';
 import { getView } from '../src/views.js';
 import {transverseRadiation} from '../src/physics.js';
 
+test('cavity defaults show the 45.6 GeV microradian cone and downstream transport',()=>{
+  const e=experiments.find(e=>e.id==='cavity'),s=Object.fromEntries(e.controls.map(c=>[c.key,c.default]));
+  const v=getView('cavity',s);
+  assert.match(v.xLabel,/µrad/);
+  const peak=v.traces[0].points.reduce((a,b)=>a[1]>b[1]?a:b);
+  assert.ok(Math.abs(peak[0])>5.5&&Math.abs(peak[0])<5.7);
+  assert.ok(v.metrics.some(m=>m.value==='45.6 GeV'));
+  assert.ok(v.metrics.some(m=>m.name==='Wall interception · energy'&&m.value==='≈ 0%'));
+});
+test('cavity chart resolves the narrow exit cone during strong low-energy acceleration',()=>{
+  const v=getView('cavity',{cavityEnergy:.000516,gainMeV:100,aperture:25});
+  for(const t of v.traces)assert.ok(Math.abs(Math.max(...t.points.map(p=>p[1]))-1)<1e-10);
+  assert.ok(v.traces[1].points.filter(([x,y])=>x>1500&&x<3500&&y>.1).length>20);
+});
+
 test('every experiment has finite chart traces at default and control extrema', () => {
   for (const exp of experiments) {
     const defaults = Object.fromEntries(exp.controls.map(c => [c.key, c.default]));

@@ -1,4 +1,4 @@
-import {createCavityModel} from './cavity-physics.js';
+import {createCavityModel,cavityPeak} from './cavity-physics.js';
 
 const C={cyan:'#55d9d0',amber:'#f5bc70',purple:'#b5a0ff',ink:'#e3edf0',muted:'#8c9fa9',wall:'#a99b7e',grid:'#38515c'};
 const TAU=2*Math.PI;
@@ -17,11 +17,15 @@ export function renderCavity(ctx,w,h,id,state,time){
   if(id!=='cavity')return false;
   const model=createCavityModel(state),t=(time*.45)%model.cycle,p=model.state(t);
   const scale=500,axis=210,sx=x=>115+scale*x,sy=r=>axis-scale*r;
-  const accelerating=(state.gain??20)>0&&t>model.entryTime&&t<model.exitTime;
+  const accelerating=model.gain>0&&t>model.entryTime&&t<model.exitTime;
+  const energy=model.energyGeV*p.gamma/model.gammaIn;
+  const peakSpread=Math.tan(cavityPeak(model.gammaIn))*1e6;
+  const micron=value=>value>=1e5?value.toExponential(2):value.toLocaleString('en-US',{maximumFractionDigits:2});
   ctx.save();ctx.scale(w/900,h/400);
   text(ctx,'Radiation packets move outward; field lines are not shown',30,28,C.ink,14);
   text(ctx,'Meridional section · equal distance scales on both axes',30,48,C.muted,10);
-  text(ctx,`γ = ${p.gamma.toFixed(2)}  ·  ${accelerating?'ACCELERATING':'DRIFT'}`,870,28,accelerating?C.cyan:C.muted,12,'right');
+  text(ctx,`γ = ${p.gamma>=1e4?p.gamma.toExponential(3):p.gamma.toFixed(2)}  ·  ${accelerating?'ACCELERATING':'DRIFT'}`,870,28,accelerating?C.cyan:C.muted,12,'right');
+  text(ctx,`${energy.toLocaleString('en-US',{maximumSignificantDigits:6})} GeV`,870,48,C.ink,12,'right');
 
   // The wall is the identical polygon used by the first-hit ray tracer.
   ctx.beginPath();
@@ -37,12 +41,12 @@ export function renderCavity(ctx,w,h,id,state,time){
 
   // Only compact arrows are drawn near the axis; they describe the applied force,
   // whereas the amber packet trails describe the radiation travel direction.
-  if((state.gain??20)>0)for(const side of [-1,1])for(const x of [.3,.5,.7]){
+  if(model.gain>0)for(const side of [-1,1])for(const x of [.3,.5,.7]){
     const y=axis+side*42,ex=sx(x)+16;
     line(ctx,[[sx(x)-16,y],[ex,y],[ex-5,y-3]],'#55d9d046',1);
     line(ctx,[[ex,y],[ex-5,y+3]],'#55d9d046',1);
   }
-  if((state.gain??20)>0)text(ctx,'force on electron →',sx(.5),axis-60,C.cyan,10,'center');
+  if(model.gain>0)text(ctx,'force on electron →',sx(.5),axis-60,C.cyan,10,'center');
 
   const downstream=sx(1.3),portHalf=Math.max(17,scale*model.a+8);
   line(ctx,[[downstream,axis-portHalf],[downstream,axis+portHalf]],'#f5bc7088',1.5,[3,4]);
@@ -76,9 +80,12 @@ export function renderCavity(ctx,w,h,id,state,time){
   }
   ctx.restore();
 
+  text(ctx,`Free-space peak spread at 1 m: ${micron(peakSpread)} µm`,sx(.5),284,C.amber,11,'center');
+  text(ctx,`Beam-pipe aperture radius: ${micron(model.a*1e6)} µm`,sx(.5),301,C.muted,10,'center');
+
   // Packet centers follow true light-speed paths, with a constant display clock
   // shared by the source. Each paired meridional dot represents half a ring.
-  text(ctx,(state.gain??20)===0?'Zero energy gain: no acceleration and no emitted packets.':'Amber: equal-energy packets · purple: absorbed at first wall contact',30,366,C.ink,11);
-  text(ctx,'Representative axisymmetric rings, not individual photons · light speed slowed · no reflection or wall-field response',30,389,C.muted,10);
+  text(ctx,model.gain===0?'Zero energy gain: no acceleration and no emitted packets.':'Amber: equal-energy packets · purple: absorbed at first wall contact',30,366,C.ink,11);
+  text(ctx,'Packet centers at true scale · dot sizes enlarged · representative energy rings · light speed slowed',30,389,C.muted,10);
   ctx.restore();return true;
 }
