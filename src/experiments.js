@@ -32,7 +32,7 @@ export const experiments = [
     equation: 'dP/dΩ ∝ |n × [(n − β) × a]|² / (1 − n·β)⁵',
     explanation: 'Acceleration points along x, and the laboratory velocity points along z. In the instantaneous rest frame the dipole pattern is proportional to sin²χ, where χ is the angle from the acceleration axis: no radiation along acceleration, maximum perpendicular to it. Relativistic motion concentrates the lab-frame angular power near the velocity direction. Each surface’s radius is proportional to its angular power divided by its own peak; it is not a photon trajectory, wavefront or a comparison of absolute powers. The plot is a slice through those same surfaces. The demonstration uses modest γ so the cone stays visible; real GeV electrons have γ in the thousands.',
     slides: '13',
-    controls: [{ key: 'gammaDemo', label: 'Demonstration Lorentz factor', min: 1, max: 30, step: .5, unit: 'γ', default: 5 },
+    controls: [{ key: 'gammaDemo', label: 'Demonstration Lorentz factor', min: 1, max: 30, step: .0001, scale: 'rapidity', presets: [1, 1.01, 1.1, 2, 5, 30], unit: 'γ', default: 1 },
       { key: 'framePlane', label: 'Angular-power slice', default: 'orbit', options: [{ value: 'orbit', label: 'Orbit plane · contains acceleration' }, { value: 'perpendicular', label: 'Perpendicular plane · normal to acceleration' }] }],
   },
   {

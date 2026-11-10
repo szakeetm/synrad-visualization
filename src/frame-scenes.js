@@ -92,7 +92,7 @@ function panel(ctx,cx,cy,gamma,lab,time) {
   ctx.save();ctx.fillStyle=C.ink;ctx.shadowColor=lab?C.amber:C.cyan;ctx.shadowBlur=15;
   ctx.beginPath();ctx.arc(cx,cy,4,0,TAU);ctx.fill();ctx.restore();
   text(ctx,lab?'LAB FRAME':'PARTICLE FRAME',cx,65,lab?C.amber:C.cyan,12,'center');
-  text(ctx,lab?`γ = ${gamma.toFixed(1)} · β = ${Math.sqrt(1-1/gamma**2).toFixed(3)}`:'Instantaneous rest frame · v′ = 0',cx,86,C.muted,11,'center');
+  text(ctx,lab?`γ = ${gamma.toFixed(gamma<1.1?4:3)} · β = ${Math.sqrt(1-1/gamma**2).toFixed(3)}`:'Instantaneous rest frame · v′ = 0',cx,86,C.muted,11,'center');
   text(ctx,lab?(gamma===1?'At γ = 1 the two patterns agree':'Power concentrates along the velocity'):'Radiation is strongest perpendicular to a',cx,354,C.ink,12,'center');
   if(lab)text(ctx,gamma<2?'No narrow relativistic cone':`Characteristic angle ∼ 1/γ = ${(180/Math.PI/gamma).toFixed(1)}°`,cx,374,C.muted,10,'center');
   else text(ctx,'Dipole angular pattern · broad in both directions',cx,374,C.muted,10,'center');

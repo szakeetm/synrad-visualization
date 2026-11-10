@@ -40,7 +40,7 @@ export function getView(id,s) {
     for(let i=0;i<=720;i++){const a=-Math.PI+i*Math.PI/360;angles.push(Math.sign(a)*aberrate(Math.abs(a),G)*180/Math.PI);}
     const sorted=[...new Set(angles)].sort((a,b)=>a-b);
     const points=gamma=>sorted.map(a=>[a,transverseRadiation(a*Math.PI/180,phi,gamma)]);
-    return base('Angular-power slice through the lobes','Angle from laboratory forward axis (°)',[-180,180],[metric('Demonstration γ',fmt(G)),metric('Speed · β',`${fmt(beta*100,3)}% c`),metric('Beaming scale',G<2?'Broad pattern':`~ ${fmt(180/Math.PI/G)}° · 1/γ`)],{
+    return base('Angular-power slice through the lobes','Angle from laboratory forward axis (°)',[-180,180],[metric('Demonstration γ',fmt(G,4)),metric('Speed · β',`${fmt(beta*100,3)}% c`),metric('Beaming scale',G<2?'Broad pattern':`~ ${fmt(180/Math.PI/G)}° · 1/γ`)],{
       yLabel:'Angular power / own peak',traces:[trace('Lab frame',colors.amber,points(G)),trace('Particle frame',colors.cyan,points(1),true)],
       badge:phi===0?'SLICE IN ORBIT PLANE':'SLICE NORMAL TO ACCELERATION',
       caption:'Exact instantaneous angular power for transverse acceleration, matching the 3D surfaces above. Each frame is normalized to its own peak; absolute powers are not being compared. The orbit-plane slice has acceleration-related nodes; the perpendicular slice does not.',

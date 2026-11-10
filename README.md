@@ -14,6 +14,8 @@ Open **http://localhost:4173**. Alternatively, serve this directory with any sta
 
 Each plot has independent **X axis** and **Y axis** Lin/Log controls. Scale choices are remembered per experiment while switching tabs; Reset restores the original defaults. Signed angular axes use **Sym log**, preserving negative angles and zero with a linear region within 1% of the largest displayed absolute angle. On nonnegative logarithmic axes zero is omitted, and values below the plotted range are clipped without an artificial floor.
 
+The Reference frames γ slider starts at 1 and is spaced uniformly in rapidity (`γ = cosh η`), giving fine control near rest while retaining the range to γ = 30. Presets provide exact comparisons at 1, 1.01, 1.1, 2, 5 and 30; the readout shows actual γ, not slider position.
+
 ```sh
 npm test
 ```
