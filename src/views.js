@@ -1,4 +1,5 @@
 import {gamma, criticalEnergy, spectrum, vertical, aberrate, reflectivity, criticalAngle, attenuation, transmission, specularFraction, undulatorEnergy, sinc, harmonicCoupling, dipoleProperties, quadrupoleProperties, quadrupoleSourceDensity, angularPolarization, photonFluxPerBandwidth, powerPerBandwidth, transverseRadiation} from './physics.js';
+import {createCavityModel,cavityPattern,cavityPeak} from './cavity-physics.js';
 
 export const colors = { cyan: '#208f86', amber: '#d69b4b', purple: '#9884c3', grey: '#b6c6c6' };
 const sample = (a,b,n,fn) => Array.from({length:n+1},(_,i) => {const x=a+(b-a)*i/n; return [x,fn(x)];});
@@ -12,6 +13,22 @@ function erf(x) {const sign=Math.sign(x);x=Math.abs(x);const t=1/(1+.3275911*x);
 
 export function getView(id,s) {
   const E=s.energy??3, g=gamma(E), ec=criticalEnergy(E,s.rho??10);
+  if(id==='cavity'){
+    const m=createCavityModel(s),limit=Math.min(180,cavityPeak(m.gammaIn)*720/Math.PI),active=m.fractions!==null;
+    const fraction=key=>m.fractions?`≈ ${percent(m.fractions[key])}`:'—';
+    return base('Angular power at the entrance and exit','Angle from forward direction (degrees)',[-limit,limit],[
+      metric('Entrance → exit γ',`${fmt(m.gammaIn)} → ${fmt(m.gammaOut)}`),
+      metric('Downstream port · energy',fraction('downstream')),
+      metric('Wall interception · energy',fraction('wall')),
+      metric('Upstream port · energy',fraction('upstream')),
+      metric('Exit peak angle',`${fmt(cavityPeak(m.gammaOut)*180/Math.PI,3)}°`)],{
+      traces:[trace('Entrance · unit peak',colors.cyan,sample(-limit,limit,600,a=>active?cavityPattern(a*Math.PI/180,m.gammaIn):0)),
+        trace('Exit · unit peak',colors.amber,sample(-limit,limit,600,a=>active?cavityPattern(a*Math.PI/180,m.gammaOut):0))],
+      badge:active?'LONGITUDINAL ACCELERATION':'NO ACCELERATION',
+      caption:'Power per solid angle and source time. Each curve is normalized to its own peak. The two peaks are a slice through a hollow cone; the forward axis is dark. At Δγ = 0 there is no radiation.',
+      legend:[['Electron','#55d9d0'],['Radiation energy packets','#f5bc70'],['Wall interception','#b5a0ff']],
+      note:'Packet counts sample radiated energy, not photon number. Percentages integrate over the full 3D solid angle and emission time; first-wall absorption and axisymmetric geometrical optics are assumed.'});
+  }
   if(id==='spectrum') {
     const ref=criticalEnergy(10,s.rho),length=s.length??1,normalized=s.spectrumNormalization==='normalized',isPower=s.spectrumQuantity==='power';
     const fn=isPower?powerPerBandwidth:photonFluxPerBandwidth;

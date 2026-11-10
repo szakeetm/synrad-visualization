@@ -137,4 +137,16 @@ export const experiments = [
       { key: 'period', label: 'Magnetic period', min: 10, max: 100, step: 1, unit: 'mm', default: 30 },
       { key: 'periods', label: 'Number of periods', min: 5, max: 50, step: 1, unit: '', default: 20 }],
   },
+  {
+    id: 'cavity', title: 'Radiation travels forward', short: 'Cavity radiation', group: 'Sources',
+    kicker: '12 / Longitudinal acceleration',
+    description: 'Follow radiation energy packets through a virtual accelerating cavity. Raise the entrance energy to narrow the emission, or change the aperture to reveal wall interception.',
+    notice: 'Compare entrance γ = 2 and γ = 20. At high γ, most packets reach the downstream port. A smaller aperture can still intercept them.',
+    equation: 'dP/dΩ ∝ sin²θ / (1 − β cosθ)⁵;  θpeak ≈ 1 / (2γ)',
+    explanation: 'The electron gains energy along a straight line in an ideal 1 m gap: γ(x) = γin + Δγ × x/L. The longitudinal force is constant, so equal source-time intervals emit equal radiated energy. Amber packets move on straight paths at c; they represent equal energy shares of the full axisymmetric angular distribution, not individual photons or electric-field lines. Paired upper/lower tracks represent a meridional slice of radiation rings. Their angles and the cavity geometry share one spatial scale. The longitudinal pattern has a dark axis and a narrow forward cone at large γ. Packets stop at the first wall hit; purple flashes mark geometric interception. The percentages estimate energy reaching a downstream plane 0.3 m beyond the gap, intercepted by walls, or reaching the upstream plane. They do not guarantee escape from a longer pipe. This is a ray-transport teaching model, with absorbing walls; RF phase, cavity electromagnetic boundary conditions, reflection, diffraction, interference, spectra and radiation reaction are omitted.',
+    slides: '13 · EXTENSION: LONGITUDINAL ACCELERATION',
+    controls: [{ key: 'gammaIn', label: 'Entrance Lorentz factor', min: 1.01, max: 100, step: .0001, scale: 'rapidity', presets: [1.01, 2, 5, 20, 100], unit: 'γ', default: 20 },
+      { key: 'gain', label: 'Cavity energy gain', min: 0, max: 50, step: .5, unit: 'Δγ', default: 20 },
+      { key: 'aperture', label: 'Beam-pipe aperture radius', min: 5, max: 100, step: 1, unit: 'mm', default: 25 }],
+  },
 ];

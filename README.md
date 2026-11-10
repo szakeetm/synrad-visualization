@@ -1,6 +1,6 @@
 # Synrad interactive lab
 
-A browser teaching companion to **“Synrad tutorial”**, Márton Ady and Gabriel Saretti (CERN), CAS Prague, 16 November 2026. Eleven experiments pair animations with controls, plots and equations. The first navigation item opens the separately hosted [Radiation 2D demo](https://szakeetm.github.io/radiation2d-browser/) in a new tab. Its source, tests, credits and license are maintained in the adjacent `../synrad2d-browser` repository ([GitHub](https://github.com/szakeetm/radiation2d-browser)); this project does not bundle it.
+A browser teaching companion to **“Synrad tutorial”**, Márton Ady and Gabriel Saretti (CERN), CAS Prague, 16 November 2026. Twelve experiments pair animations with controls, plots and equations. The first navigation item opens the separately hosted [Radiation 2D demo](https://szakeetm.github.io/radiation2d-browser/) in a new tab. Its source, tests, credits and license are maintained in the adjacent `../synrad2d-browser` repository ([GitHub](https://github.com/szakeetm/radiation2d-browser)); this project does not bundle it.
 
 ## Run
 
@@ -37,6 +37,7 @@ The numerical tests check critical-energy scaling, the universal spectrum, direc
 | Dipole | Electron energy, uniform field, magnet length, current | 3, 11, 25 |
 | Quadrupole | Electron energy, field gradient, round-beam size, offset, length | 26–27 |
 | Insertion devices | Electron energy, K, magnetic period, number of periods | 5, 28–29 |
+| Cavity radiation | Entrance γ, longitudinal energy gain, aperture radius, packet escape and wall interception | Extension of 13 |
 
 ## Physics and limits
 
@@ -74,3 +75,23 @@ The app is a static site. The GitHub Pages workflow publishes the repository's a
 ## License
 
 GPL-3.0-only; see [LICENSE](LICENSE). The separately maintained [Radiation 2D app](https://github.com/szakeetm/radiation2d-browser) retains its own visible credits, provenance and license. No lecture PDF or Windows Radiation2D binary is redistributed.
+
+## Cavity radiation packets
+
+The **Cavity radiation** tab (`#cavity`) follows equal-energy radiation packets
+through a 1 m virtual accelerating gap and short beam pipes. Entrance Lorentz
+factor, energy gain and aperture radius are adjustable. The electron follows
+constant longitudinal force; packets travel at c on straight paths, stopping
+at their first intersection with an axisymmetric absorbing wall. Upper/lower
+tracks represent meridional slices of radiation rings. Their angles are not
+exaggerated. Interception and port percentages weight the full solid-angle
+energy distribution and source time, rather than an unweighted 2D angular slice.
+
+This is a geometrical transport teaching model, not a cavity electromagnetic
+solver. It omits conducting-wall modification of emission, RF phase, reflection,
+diffraction, interference, spectra and radiation reaction. Downstream means
+the plane 0.3 m beyond the gap; a longer pipe could intercept more radiation.
+At zero energy gain no radiation packets are emitted.
+
+Physics reference: [Fitzpatrick, angular distribution of radiation, equations
+1661–1666](https://farside.ph.utexas.edu/teaching/em/lectures/node132.html).
