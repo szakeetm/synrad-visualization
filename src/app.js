@@ -14,7 +14,7 @@ let selected=experiments[0],sharedEnergy=3,time=0,last=0,paused=matchMedia('(pre
 const canvas=$('scene'),ctx=canvas.getContext('2d');
 const set=(id,value)=>$(id).textContent=value;
 const nav=$('navigation');
-const intro=document.createElement('a');intro.className='nav-item';intro.href='./radiation2d/index.html';intro.target='_blank';intro.rel='noopener';intro.innerHTML='<span class="nav-index">00</span> Radiation 2D <span class="arrow">↗</span>';intro.setAttribute('aria-label','Radiation 2D — opens in a new tab');nav.append(intro);
+const intro=document.createElement('a');intro.className='nav-item';intro.href='https://szakeetm.github.io/radiation2d-browser/';intro.target='_blank';intro.rel='noopener';intro.innerHTML='<span class="nav-index">00</span> Radiation 2D <span class="arrow">↗</span>';intro.setAttribute('aria-label','Radiation 2D — opens in a new tab');nav.append(intro);
 let group='';
 experiments.forEach((e,i)=>{
   if(e.group!==group){group=e.group;const title=document.createElement('div');title.className='nav-group';title.textContent=group;nav.append(title);}

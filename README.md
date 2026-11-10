@@ -1,6 +1,6 @@
 # Synrad interactive lab
 
-A browser teaching companion to **“Synrad tutorial”**, Márton Ady and Gabriel Saretti (CERN), CAS Prague, 16 November 2026. Eleven experiments pair animations with controls, plots and equations. The first navigation item opens an included copy of the adjacent [Radiation 2D browser project](https://github.com/szakeetm/radiation2d-browser) in a new tab. Its source, license and provenance are preserved under `radiation2d/`.
+A browser teaching companion to **“Synrad tutorial”**, Márton Ady and Gabriel Saretti (CERN), CAS Prague, 16 November 2026. Eleven experiments pair animations with controls, plots and equations. The first navigation item opens the separately hosted [Radiation 2D demo](https://szakeetm.github.io/radiation2d-browser/) in a new tab. Its source, tests, credits and license are maintained in the adjacent `../synrad2d-browser` repository ([GitHub](https://github.com/szakeetm/radiation2d-browser)); this project does not bundle it.
 
 ## Run
 
@@ -73,4 +73,4 @@ The app is a static site. The GitHub Pages workflow publishes the repository's a
 
 ## License
 
-GPL-3.0-only; see [LICENSE](LICENSE). The included Radiation 2D app retains its own visible credits, [provenance](radiation2d/README.md) and license. No lecture PDF or Windows Radiation2D binary is redistributed.
+GPL-3.0-only; see [LICENSE](LICENSE). The separately maintained [Radiation 2D app](https://github.com/szakeetm/radiation2d-browser) retains its own visible credits, provenance and license. No lecture PDF or Windows Radiation2D binary is redistributed.
