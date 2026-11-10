@@ -1,0 +1,12 @@
+{
+  "name": "synrad-visualization",
+  "version": "1.0.0",
+  "private": true,
+  "license": "GPL-3.0-only",
+  "type": "module",
+  "description": "An interactive synchrotron radiation teaching lab",
+  "scripts": {
+    "start": "node scripts/serve.js",
+    "test": "node --test"
+  }
+}

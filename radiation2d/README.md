@@ -1,0 +1,50 @@
+# Radiation 2D · browser edition
+
+An interactive, dependency-free Canvas 2D visualization of radiation from a moving charge. Drag with a mouse or touch, or explore an oscillator, a dipole bending magnet, and a wiggler. Selecting Free drag resets the charge to rest at the center.
+
+## Run
+
+Requires Node.js 20 or newer. No install or build step:
+
+```sh
+npm start
+```
+
+Open **http://127.0.0.1:4173**. Alternatively serve this directory with any static HTTP server. Use `PORT=4180 npm start` to choose another port. All runtime assets are local and work without network access after loading.
+
+## Controls
+
+- Free drag: press anywhere in the canvas and move the pointer. The charge follows with damped, relativistic motion; it cannot exceed c.
+- Oscillator: one charge oscillating vertically, demonstrating dipole radiation. Peak speed is βc; amplitude A gives angular frequency β/A.
+- Dipole: a 30° sector bending magnet with tangent straight entry/exit paths, at constant speed βc. Adjust the bend radius. Repeat pass (on by default) replays from the entrance with fresh incoming field history after the charge and its glow have fully left the viewport; turn it off for a continuous exit into the laboratory frame. Replaying resets the demonstration, rather than teleporting a particle within retained physical history.
+- Wiggler: straight entry from the left edge; sinusoidal transverse momentum in the magnetic region from 25% to 75% of the viewport width; straight exit to the right edge. K is peak transverse momentum / mc. The app limits K to 0.98γβ so forward motion stays possible at the selected total speed. Defaults distinguish gentle and stronger deflection; both presets share the same equations.
+- Magnet periods selects 1–8 complete periods inside the finite magnetic region. Repeat pass is at the top of **02 Tune the particle** for Dipole and Wiggler (on by default). It returns to the entrance with fresh field history at the end of each pass; turn it off to let the charge continue out of view. c = 1 throughout.
+- Switch field lines, pink wavefronts, and yellow trajectory independently. The view stays fixed in the laboratory frame: the particle moves through the viewport. There are no zoom or follow-camera controls.
+- Pause, single step, reset, playback speed (0.25×–4×, default 2×) and field-detail controls. Space pauses/resumes, `.` steps while paused, R resets. Focus the canvas and use arrow keys to move the free-drag target.
+- Motion/particle parameter changes reset and prefill compatible field history. Display-only changes preserve the simulation. Reduced-motion preferences start playback paused.
+
+## Physics and limits
+
+Each emission stores the position and velocity of the charge. Equally spaced rest-frame directions are Lorentz-aberrated into the laboratory frame, following Shintake's equation (4). Each resulting wavelet travels straight at c; its position is emission position + age × direction, equation (5). Connecting corresponding direction labels across emission history draws field lines. Pink circles show emission wavefronts.
+
+The simulation uses a fixed 1/120 normalized-time step and at most 15 time units of history (1801 emissions). The initial scene is prefilled with 12 units of trajectory. For the finite magnetic trajectories, earlier field geometry is reconstructed analytically from their incoming drift, magnetic region, and outgoing drift. Their field lines extend beyond the viewport even at high β or on wide displays, without enlarging the stored history. Traveling demonstrations reset their history between repeated passes, avoiding radiation artifacts from position wrapping. Resizing the viewport restarts the wiggler pass so the magnetic region remains at the quarter and three-quarter marks. Canvas draws a planar slice of a 3D field. Line crowding qualitatively illustrates field geometry; brightness is not calibrated field strength or radiation power. Wavefronts exist for a static charge too, and do not by themselves signify energy loss. No power spectrum, multi-particle effects, or interference calculation is performed.
+
+## Credits and provenance
+
+**Tsumoru Shintake** created the original **Radiation2D** and the wavelet visualization method. The screenshots and equations from his LINAC2002 paper inspired this implementation:
+
+- T. Shintake, [“New Real-Time Simulation Technique for Synchrotron and Undulator Radiations”](https://accelconf.web.cern.ch/l02/PAPERS/TH426.PDF), Proceedings of LINAC2002, Gyeongju, Korea, pp. 659–661.
+- T. Shintake, [“Real-time animation of synchrotron radiation”](https://doi.org/10.1016/S0168-9002(03)00844-1), Nuclear Instruments and Methods in Physics Research A **507** (2003), 89–92.
+- [Original software and manuals at OIST](https://www.oist.jp/research/research-units/qwmu/software).
+
+**Andrei Frolov** wrote the open-source [Radiation 2D Swift reimplementation for macOS and iOS](https://github.com/andrei-v-frolov/radiation-2d) (2023), licensed under GPL-3.0. Its trajectory and relativistic pointer-following model informed this browser version. Source inspected at commit `e8ce0d0c6e862d07025fa33ee80fc9f6ed5f36d4`. This browser version implements its own JavaScript physics and rendering; the inspected Swift revision contains trajectory/UI scaffolding rather than the complete field-line renderer.
+
+Credits are also visible in the app footer and its Science & credits dialog. This browser version is released under **GPL-3.0-only**; see [LICENSE](LICENSE). The original Windows program's licensing is separate; no Windows binary or source is included.
+
+## Verify
+
+```sh
+npm test
+```
+
+Node's built-in tests check Lorentz aberration, light propagation, subluminal trajectories and dragging, K normalization, reset, and bounded history. Browser interaction checks complement these physics tests.
