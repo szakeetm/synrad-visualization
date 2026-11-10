@@ -22,6 +22,7 @@ experiments.forEach((e,i)=>{
 
 function select(id) {
   selected=experiments.find(e=>e.id===id)??experiments[0];
+  $('scene-card').hidden=selected.id==='spectrum';$('chart-reset').hidden=selected.id!=='spectrum';
   if('energy' in states[selected.id]){const c=selected.controls.find(c=>c.key==='energy');sharedEnergy=Math.max(c.min,Math.min(c.max,sharedEnergy));states[selected.id].energy=sharedEnergy;}
   document.querySelectorAll('[data-id]').forEach(a=>{const active=a.dataset.id===selected.id;a.classList.toggle('active',active);if(active)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
   set('kicker',selected.kicker);set('title',selected.title);set('description',selected.description);set('notice',selected.notice);set('explanation',selected.explanation);set('equation',selected.equation);set('slides',`SYNRAD TUTORIAL · SLIDES ${selected.slides}`);set('experiment-number',String(experiments.indexOf(selected)+1).padStart(2,'0'));
@@ -54,15 +55,16 @@ function update() {
   $('metrics').replaceChildren(...view.metrics.map(m=>{const div=document.createElement('div');div.className='metric';const name=document.createElement('span');name.className='metric-name';name.textContent=m.name;const value=document.createElement('span');value.className='metric-value';value.textContent=m.value;div.append(name,value);return div;}));
   draw();
 }
-function draw(){ctx.clearRect(0,0,900,400);ctx.fillStyle='#101d29';ctx.fillRect(0,0,900,400);ctx.strokeStyle='#7a9eab0b';ctx.lineWidth=1;for(let x=0;x<900;x+=30){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,400);ctx.stroke();}for(let y=0;y<400;y+=30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(900,y);ctx.stroke();}renderPolarization(ctx,900,400,selected.id,states[selected.id],time)||renderMagnet(ctx,900,400,selected.id,states[selected.id],time)||renderSource(ctx,900,400,selected.id,states[selected.id],time)||renderMaterial(ctx,900,400,selected.id,states[selected.id],time);}
+function draw(){if(selected.id==='spectrum')return;ctx.clearRect(0,0,900,400);ctx.fillStyle='#101d29';ctx.fillRect(0,0,900,400);ctx.strokeStyle='#7a9eab0b';ctx.lineWidth=1;for(let x=0;x<900;x+=30){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,400);ctx.stroke();}for(let y=0;y<400;y+=30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(900,y);ctx.stroke();}renderPolarization(ctx,900,400,selected.id,states[selected.id],time)||renderMagnet(ctx,900,400,selected.id,states[selected.id],time)||renderSource(ctx,900,400,selected.id,states[selected.id],time)||renderMaterial(ctx,900,400,selected.id,states[selected.id],time);}
 function setPaused(value){paused=value;$('pause').textContent=paused?'▶ Play':'Ⅱ Pause';$('pause').setAttribute('aria-pressed',String(paused));set('scene-label',paused?'EXPERIMENT PAUSED':'LIVE EXPERIMENT');}
 $('pause').addEventListener('click',()=>setPaused(!paused));
-$('reset').addEventListener('click',()=>{delete plotScales[selected.id];states[selected.id]=Object.fromEntries(selected.controls.map(c=>[c.key,c.default]));if('energy'in states[selected.id])sharedEnergy=3;select(selected.id);});
+function resetExperiment(){delete plotScales[selected.id];states[selected.id]=Object.fromEntries(selected.controls.map(c=>[c.key,c.default]));if('energy'in states[selected.id])sharedEnergy=3;select(selected.id);}
+$('reset').addEventListener('click',resetExperiment);$('chart-reset').addEventListener('click',resetExperiment);
 for(const axis of ['x','y'])for(const scale of ['linear','log'])$(`${axis}-${scale}`).addEventListener('click',()=>{plotScales[selected.id]={...plotScales[selected.id],[axis]:scale};update();});
 $('next').addEventListener('click',()=>{location.hash=experiments[(experiments.indexOf(selected)+1)%experiments.length].id;});
 $('about-button').addEventListener('click',()=>$('about').showModal());$('close-about').addEventListener('click',()=>$('about').close());
 $('about').addEventListener('click',e=>{if(e.target===$('about')){const r=$('about').getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)$('about').close();}});
 window.addEventListener('hashchange',()=>select(location.hash.slice(1)));
-window.addEventListener('keydown',e=>{if(e.code==='Space'&&!['INPUT','SELECT','BUTTON','A','TEXTAREA'].includes(document.activeElement.tagName)&&!$('about').open){e.preventDefault();setPaused(!paused);}});
+window.addEventListener('keydown',e=>{if(selected.id!=='spectrum'&&e.code==='Space'&&!['INPUT','SELECT','BUTTON','A','TEXTAREA'].includes(document.activeElement.tagName)&&!$('about').open){e.preventDefault();setPaused(!paused);}});
 function tick(now){if(!paused&&!document.hidden)time+=last?Math.min((now-last)/1000,.05):0;last=now;if(!paused&&!document.hidden)draw();requestAnimationFrame(tick);}
 select(location.hash.slice(1));setPaused(paused);requestAnimationFrame(tick);
