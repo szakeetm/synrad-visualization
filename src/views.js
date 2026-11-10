@@ -1,4 +1,4 @@
-import {gamma, criticalEnergy, spectrum, vertical, reflectivity, criticalAngle, attenuation, transmission, specularFraction, undulatorEnergy, sinc, harmonicCoupling, dipoleProperties, quadrupoleProperties, quadrupoleSourceDensity, angularPolarization, photonFluxPerBandwidth, powerPerBandwidth} from './physics.js';
+import {gamma, criticalEnergy, spectrum, vertical, aberrate, reflectivity, criticalAngle, attenuation, transmission, specularFraction, undulatorEnergy, sinc, harmonicCoupling, dipoleProperties, quadrupoleProperties, quadrupoleSourceDensity, angularPolarization, photonFluxPerBandwidth, powerPerBandwidth, transverseRadiation} from './physics.js';
 
 export const colors = { cyan: '#208f86', amber: '#d69b4b', purple: '#9884c3', grey: '#b6c6c6' };
 const sample = (a,b,n,fn) => Array.from({length:n+1},(_,i) => {const x=a+(b-a)*i/n; return [x,fn(x)];});
@@ -35,13 +35,17 @@ export function getView(id,s) {
       note:'A 0.1% band has width ΔEph = 0.001 Eph. The 10 GeV reference uses the same radius, length and current. At ρ = 33.33 m, its Ec ≈ 66.5 keV, as in the lecture.'});
   }
   if(id==='frames') {
-    const G=s.gammaDemo,beta=Math.sqrt(1-1/G**2);
-    const points=sample(-180,180,900,a=>{const c=Math.cos(a*Math.PI/180);const cp=(c-beta)/(1-beta*c);return cp**2/(G*(1-beta*c))**2;});
-    const max=Math.max(...points.map(p=>p[1]));
-    return base('From a broad pattern to a forward cone','Angle from forward direction (°)',[-180,180],[metric('Demonstration γ',fmt(G)),metric('Speed · β',`${fmt(beta*100,3)}% c`),metric('Cone scale · 1/γ',`${fmt(180/Math.PI/G)}°`)],{
-      traces:[trace('Lab frame',colors.cyan,points.map(([x,y])=>[x,y/max])),trace('Particle frame',colors.purple,sample(-180,180,360,a=>Math.cos(a*Math.PI/180)**2),true)],
-      badge:'DIRECTIONAL ABERRATION',caption:'Dipole angular photon distribution per solid angle, each curve normalized to its own peak. This compares directions, not radiation power or Doppler-shifted photon energy.',
-      legend:[['Particle frame','#b5a0ff'],['Lab frame','#55d9d0']],note:'θ′ and θ are measured from forward motion. γ here is separate from the GeV energy used in other experiments.'});
+    const G=s.gammaDemo,beta=Math.sqrt(1-1/G**2),phi=s.framePlane==='perpendicular'?Math.PI/2:0;
+    const angles=Array.from({length:721},(_,i)=>-180+i*.5);
+    for(let i=0;i<=720;i++){const a=-Math.PI+i*Math.PI/360;angles.push(Math.sign(a)*aberrate(Math.abs(a),G)*180/Math.PI);}
+    const sorted=[...new Set(angles)].sort((a,b)=>a-b);
+    const points=gamma=>sorted.map(a=>[a,transverseRadiation(a*Math.PI/180,phi,gamma)]);
+    return base('Angular-power slice through the lobes','Angle from laboratory forward axis (°)',[-180,180],[metric('Demonstration γ',fmt(G)),metric('Speed · β',`${fmt(beta*100,3)}% c`),metric('Beaming scale',G<2?'Broad pattern':`~ ${fmt(180/Math.PI/G)}° · 1/γ`)],{
+      yLabel:'Angular power / own peak',traces:[trace('Lab frame',colors.amber,points(G)),trace('Particle frame',colors.cyan,points(1),true)],
+      badge:phi===0?'SLICE IN ORBIT PLANE':'SLICE NORMAL TO ACCELERATION',
+      caption:'Exact instantaneous angular power for transverse acceleration, matching the 3D surfaces above. Each frame is normalized to its own peak; absolute powers are not being compared. The orbit-plane slice has acceleration-related nodes; the perpendicular slice does not.',
+      legend:[['Particle frame','#55d9d0'],['Lab frame','#f5bc70']],
+      note:'n is the observation direction, β = v/c and a is transverse acceleration. Surface radius encodes normalized dP/dΩ, not photon position. γ is the separate demonstration control.'});
   }
   if(id==='polarization'&&s.polarizationModel==='angular') {
     const isVertical=s.cut!=='horizontal', fixed=isVertical?s.theta:s.psi;

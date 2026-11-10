@@ -1,6 +1,7 @@
 // Teaching diagrams use exaggerated transverse scales so the radiation remains
 // visible. All motion is a pure function of time, allowing a true pause.
-import { aberrate, vertical } from './physics.js';
+import { vertical } from './physics.js';
+import { renderFrames } from './frame-scenes.js';
 
 const C = { cyan: '#55d9d0', amber: '#f5bc70', purple: '#b5a0ff', text: '#e3edf0', dim: '#8c9fa9', grid: '#253944' };
 const TAU = Math.PI * 2;
@@ -73,33 +74,7 @@ function spectrumScene(ctx, s, t) {
 }
 
 function framesScene(ctx, s, t) {
-  heading(ctx, 'The same photon directions, in two frames', 'Exact angular aberration · schematic intensity');
-  const g = s.gammaDemo || 5;
-  const panels = [{ x: 238, name: 'PARTICLE FRAME', lab: false }, { x: 665, name: 'LAB FRAME', lab: true }];
-  for (const panel of panels) {
-    const { x, lab } = panel, y = 215, R = 120;
-    text(ctx, panel.name, x, 72, C.dim, 11, 'center');
-    ctx.beginPath(); ctx.arc(x, y, R, 0, TAU); ctx.strokeStyle = C.grid; ctx.setLineDash([3, 6]); ctx.stroke(); ctx.setLineDash([]);
-    arrow(ctx, x - 145, y, x + 154, y, '#46606a');
-    text(ctx, '+ velocity', x + 148, y + 24, C.dim, 11, 'right');
-    for (let i = 0; i < 36; i++) {
-      const theta = -Math.PI + (i + .5) * TAU / 36;
-      const angle = lab ? Math.sign(theta) * aberrate(Math.abs(theta), g) : theta;
-      const dx = Math.cos(angle), dy = Math.sin(angle);
-      ctx.globalAlpha = lab ? .3 : .35;
-      line(ctx, [[x, y], [x + R * dx, y - R * dy]], C.amber, 1);
-      ctx.globalAlpha = 1;
-      const f = .15 + ((t * .3 + i * .03) % 1) * .85;
-      dot(ctx, x + R * f * dx, y - R * f * dy, 2.4, C.amber);
-    }
-    dot(ctx, x, y, 6, C.cyan, true);
-    // Highlight the photon emitted at 90 degrees in the particle frame.
-    const a = lab ? aberrate(Math.PI / 2, g) : Math.PI / 2;
-    arrow(ctx, x, y, x + R * Math.cos(a), y - R * Math.sin(a), C.purple, 2.5);
-    text(ctx, lab ? `90° becomes ${(a * 180 / Math.PI).toFixed(1)}°` : 'A transverse photon: 90°', x, 367, C.purple, 13, 'center');
-  }
-  line(ctx, [[450, 85], [450, 334]], C.grid);
-  text(ctx, `γ = ${g.toFixed(1)}`, 665, 100, C.text, 21, 'center');
+  renderFrames(ctx, 900, 400, s, t);
 }
 
 function verticalScene(ctx, s, t) {

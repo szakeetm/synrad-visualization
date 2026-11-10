@@ -70,6 +70,15 @@ export function aberrate(theta, lorentzGamma) {
   // atan2 preserves backward rays and remains stable near theta = pi.
   return Math.atan2(Math.sin(theta) / lorentzGamma, Math.cos(theta) + beta);
 }
+export function transverseRadiation(theta, phi, lorentzGamma) {
+  // Instantaneous emitted power per solid angle for beta along +z, a along +x.
+  // |n × [(n - beta z) × x]|² / (1 - beta n_z)^5, divided by its forward peak.
+  const beta=Math.sqrt(1-1/lorentzGamma**2),forward=1/(lorentzGamma**2*(1+beta));
+  const nx=Math.sin(theta)*Math.cos(phi),ny=Math.sin(theta)*Math.sin(phi),nz=Math.cos(theta);
+  const denom=forward+beta*(1-nz);
+  const ex=nx*nx-denom,ey=nx*ny,ez=nx*(nz-beta);
+  return (ex*ex+ey*ey+ez*ez)*forward**3/denom**5;
+}
 export const materials = {
   Cu: { name: 'Copper', delta10: 1.7e-5, mu10: .15, color: '#b87b5b' },
   Al: { name: 'Aluminium', delta10: 5.4e-6, mu10: .007, color: '#a9bac8' },

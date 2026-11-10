@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { experiments } from '../src/experiments.js';
 import { getView } from '../src/views.js';
+import {transverseRadiation} from '../src/physics.js';
 
 test('every experiment has finite chart traces at default and control extrema', () => {
   for (const exp of experiments) {
@@ -68,4 +69,16 @@ test('polarization angular cuts keep one common scale and respect pi nodal axes'
   assert.match(origin.caption,/integrated/i);
   const spectral=getView('polarization',{polarizationModel:'spectral',cut:'vertical',theta:0,psi:0,ratio:1});
   assert.match(spectral.caption,/resolved/i);
+});
+test('reference-frame plots are slices through the same angular-power surfaces', () => {
+  for(const framePlane of ['orbit','perpendicular']){
+    const phi=framePlane==='orbit'?0:Math.PI/2;
+    const view=getView('frames',{gammaDemo:5,framePlane});
+    assert.match(view.yLabel,/power/i);
+    for(const [degrees,value]of view.traces[0].points){
+      assert.ok(Math.abs(value-transverseRadiation(degrees*Math.PI/180,phi,5))<1e-10);
+    }
+    const rest=getView('frames',{gammaDemo:1,framePlane});
+    assert.deepEqual(rest.traces[0].points,rest.traces[1].points);
+  }
 });

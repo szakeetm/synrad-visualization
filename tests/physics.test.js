@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { gamma, criticalEnergy, spectrum, vertical, aberrate, reflectivity, transmission, specularFraction, undulatorEnergy, dipoleProperties, quadrupoleField, quadrupoleProperties, quadrupoleSourceDensity, angularPolarization, photonFluxPerBandwidth, powerPerBandwidth } from '../src/physics.js';
+import { gamma, criticalEnergy, spectrum, vertical, aberrate, reflectivity, transmission, specularFraction, undulatorEnergy, dipoleProperties, quadrupoleField, quadrupoleProperties, quadrupoleSourceDensity, angularPolarization, photonFluxPerBandwidth, powerPerBandwidth, transverseRadiation } from '../src/physics.js';
 
 test('electron critical energy follows the lecture and cubic energy scaling at fixed radius', () => {
   assert.ok(Math.abs(criticalEnergy(10, 33.333) - 66.54) < .1);
@@ -31,6 +31,26 @@ test('vertical components are symmetric with zero perpendicular light in the orb
 test('aberration is identity at rest and transverse rays beam into 1/gamma', () => {
   assert.ok(Math.abs(aberrate(1.2, 1) - 1.2) < 1e-12);
   assert.ok(Math.abs(aberrate(Math.PI / 2, 20) - 1 / 20) < .0001);
+});
+test('rest-frame angular power has a dipole null along acceleration and a transverse maximum', () => {
+  assert.equal(transverseRadiation(0,0,1),1);
+  assert.ok(transverseRadiation(Math.PI/2,0,1)<1e-25);
+  assert.equal(transverseRadiation(Math.PI/2,Math.PI/2,1),1);
+  assert.equal(transverseRadiation(Math.PI,0,1),1);
+});
+test('transverse lab radiation beams forward and matches the exact orbit-plane null', () => {
+  for(const G of [1,2,5,30]){
+    const beta=Math.sqrt(1-1/G**2);
+    assert.equal(transverseRadiation(0,0,G),1);
+    const expected=((1-beta)/(1+beta))**3;
+    assert.ok(Math.abs(transverseRadiation(Math.PI,0,G)/expected-1)<1e-10);
+    if(G>1)assert.ok(transverseRadiation(Math.acos(beta),0,G)<1e-20);
+    for(let i=0;i<=100;i++)for(const phi of [0,.5,Math.PI/2]){
+      const value=transverseRadiation(i*Math.PI/100,phi,G);
+      assert.ok(Number.isFinite(value)&&value>=0&&value<=1+1e-12);
+    }
+  }
+  assert.ok(transverseRadiation(.2,Math.PI/2,10)<transverseRadiation(.2,Math.PI/2,2));
 });
 test('material transmission has correct boundaries and hardens with photon energy', () => {
   assert.equal(transmission(5, 0, 'Cu'), 1);

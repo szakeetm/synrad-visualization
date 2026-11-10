@@ -27,12 +27,13 @@ export const experiments = [
   {
     id: 'frames', title: 'The same light. Two frames.', short: 'Reference frames', group: 'Geometry',
     kicker: '02 / Relativistic beaming',
-    description: 'Radiation spread over a wide range of directions in the instantaneous particle frame is concentrated forward in the laboratory.',
-    notice: 'Raise γ and follow the same ray directions as they squeeze toward the direction of motion.',
-    equation: 'cos θ = (cos θ′ + β) / (1 + β cos θ′)',
-    explanation: 'θ′ is a ray angle measured from the direction of motion in the instantaneous rest frame; θ is its laboratory angle. Here β = v / c and γ = 1 / √(1 − β²). The transverse acceleration gives a dipole pattern in the rest frame. This scene shows directional aberration; ray density is not a calibrated power density. The demonstration uses modest γ so the cone stays visible. Real GeV electrons have γ in the thousands.',
+    description: 'As on slide 13, compare the broad dipole lobe in the instantaneous particle frame with the narrow forward radiation lobe in the laboratory.',
+    notice: 'Start at γ = 1: both patterns coincide. Raise γ to squeeze the lab lobe forward. Switch the plot’s slice plane to see the dipole’s acceleration-axis null.',
+    equation: 'dP/dΩ ∝ |n × [(n − β) × a]|² / (1 − n·β)⁵',
+    explanation: 'Acceleration points along x, and the laboratory velocity points along z. In the instantaneous rest frame the dipole pattern is proportional to sin²χ, where χ is the angle from the acceleration axis: no radiation along acceleration, maximum perpendicular to it. Relativistic motion concentrates the lab-frame angular power near the velocity direction. Each surface’s radius is proportional to its angular power divided by its own peak; it is not a photon trajectory, wavefront or a comparison of absolute powers. The plot is a slice through those same surfaces. The demonstration uses modest γ so the cone stays visible; real GeV electrons have γ in the thousands.',
     slides: '13',
-    controls: [{ key: 'gammaDemo', label: 'Demonstration Lorentz factor', min: 1, max: 30, step: .5, unit: 'γ', default: 5 }],
+    controls: [{ key: 'gammaDemo', label: 'Demonstration Lorentz factor', min: 1, max: 30, step: .5, unit: 'γ', default: 5 },
+      { key: 'framePlane', label: 'Angular-power slice', default: 'orbit', options: [{ value: 'orbit', label: 'Orbit plane · contains acceleration' }, { value: 'perpendicular', label: 'Perpendicular plane · normal to acceleration' }] }],
   },
   {
     id: 'vertical', title: 'A thin sheet of light', short: 'Vertical distribution', group: 'Geometry',
