@@ -22,7 +22,7 @@ The numerical tests check critical-energy scaling, the universal spectrum, direc
 
 | View | What to change | Lecture slides |
 | --- | --- | --- |
-| Spectrum | Electron energy, bending radius, current | 7–12 |
+| Spectrum | Flux/power per 0.1% bandwidth, absolute/peak scale, energy presets, radius, dipole length, current | 7–12 |
 | Reference frames | Demonstration Lorentz factor | 13 |
 | Vertical distribution | Electron energy and photon energy / critical energy | 14–16 |
 | Horizontal distribution | Electron energy, bend angle, screen distance | 17–18, 25 |
@@ -38,7 +38,7 @@ The numerical tests check critical-energy scaling, the universal spectrum, direc
 
 This is a teaching tool. Scene geometry, travel times and visible ray counts are schematic, with angular scales exaggerated where needed.
 
-- **Spectrum:** `Ec [keV] = 2.218 E [GeV]³ / ρ [m]`. The universal function is `F(x) = x ∫ₓ∞ K₅⁄₃(u) du`. Critical energy divides total radiated power in half; its value is distinct from the spectral maximum. Spectral power density per unit photon energy and photon number per fixed relative bandwidth share the shape `F(x)`. Photon number per unit photon energy is proportional to `F(x) / x`.
+- **Spectrum:** `Ec [keV] = 2.218 E [GeV]³ / ρ [m]`. Both axes are logarithmic, matching lecture slides 9–10. The universal function is `F(x) = x ∫ₓ∞ K₅⁄₃(u) du`. Photon flux per fixed relative bandwidth follows `F(x)` and peaks near `0.286 Ec`; power per the same bandwidth follows `x F(x)` and peaks near `1.328 Ec`. The vertical selector chooses absolute rates or independent peak normalization. A 0.1% band has width `0.001 Eph`. Absolute photon rates use `Nmag = 8.084e20 E I[A] L / (2πρ)` and `dN/dt per 0.1% BW = 0.001 Nmag F(x) / (5π/3)`. Absolute power uses `0.001 Pmag xF(x) / [8π/(9√3)]`. These narrow-band expressions integrate over `d ln Eph / 0.001` to the magnet totals; rounded lecture constants agree to approximately 0.1%. Default radius 33.33 m and length 1 m give the lecture's approximately 30 mrad bend, with presets at 1, 5, 10, 50, 100 and 500 GeV. Critical energy divides integrated power in half; equal visible area on a log–log plot does not imply equal power. The separate dipole tab intentionally shows peak-normalized spectral power **per linear photon energy**, proportional to `F(x)`, with its own label.
 - **Reference frames:** exact directional aberration, `cos θ = (cos θ′ + β) / (1 + β cos θ′)`. The deliberately modest demonstration γ keeps the cone visible; it is separate from the GeV electron energy used in the other experiments. Ray density is not a calibrated radiation power density.
 - **Vertical distribution and polarization:** ideal single-electron, energy-resolved modified-Bessel components with `ξ = (Eph / 2Ec)(1 + γ²ψ²)³ᐟ²`. The perpendicular field vanishes in the orbit plane and changes phase sign across it. Electron-beam emittance, energy spread and finite detector acceptance are omitted.
 - **Local angular polarization maps:** frequency-integrated instantaneous angular power from an ultrarelativistic transverse acceleration. With `u = γθx`, `v = γθy`, the components are `σ = (1 − u² + v²)² / (1 + u² + v²)⁵` and `π = 4u²v² / (1 + u² + v²)⁵`. Maps share a logarithmic color scale, and slice plots use the same common normalization. Their all-angle integrals give 7/8 and 1/8 of total power; the finite map window is not used to estimate those fractions. This local angular pattern (lecture slide 18) is distinct from the long-bend energy-resolved Bessel distribution in the ellipse mode.

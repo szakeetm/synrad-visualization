@@ -21,7 +21,7 @@ experiments.forEach((e,i)=>{
 
 function select(id) {
   selected=experiments.find(e=>e.id===id)??experiments[0];
-  if('energy' in states[selected.id])states[selected.id].energy=sharedEnergy;
+  if('energy' in states[selected.id]){const c=selected.controls.find(c=>c.key==='energy');sharedEnergy=Math.max(c.min,Math.min(c.max,sharedEnergy));states[selected.id].energy=sharedEnergy;}
   document.querySelectorAll('[data-id]').forEach(a=>{const active=a.dataset.id===selected.id;a.classList.toggle('active',active);if(active)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
   set('kicker',selected.kicker);set('title',selected.title);set('description',selected.description);set('notice',selected.notice);set('explanation',selected.explanation);set('equation',selected.equation);set('slides',`SYNRAD TUTORIAL · SLIDES ${selected.slides}`);set('experiment-number',String(experiments.indexOf(selected)+1).padStart(2,'0'));
   canvas.setAttribute('aria-label',`${selected.short}: ${selected.description} Geometry is schematic; the plot below contains physical units.`);
@@ -34,6 +34,7 @@ function select(id) {
     else {const output=document.createElement('output');output.id=`value-${c.key}`;output.htmlFor=`control-${c.key}`;label.append(output);input=document.createElement('input');input.type='range';input.min=c.min;input.max=c.max;input.step=c.step;}
     input.id=`control-${c.key}`;input.value=states[selected.id][c.key];box.append(label,input);
     if(!c.options){const limits=document.createElement('div');limits.className='range-limits';limits.innerHTML=`<span>${c.min} ${c.unit}</span><span>${c.max} ${c.unit}</span>`;box.append(limits);}
+    if(c.presets){const presets=document.createElement('div');presets.className='control-presets';presets.setAttribute('aria-label',`${c.label} lecture presets`);for(const value of c.presets){const button=document.createElement('button');button.type='button';button.textContent=String(value);button.setAttribute('aria-label',`Set ${c.label.toLowerCase()} to ${value} ${c.unit}`);button.addEventListener('click',()=>{states[selected.id][c.key]=value;input.value=value;if(c.key==='energy')sharedEnergy=value;update();});presets.append(button);}box.append(presets);}
     input.addEventListener('input',()=>{states[selected.id][c.key]=c.options?input.value:Number(input.value);if(c.key==='energy')sharedEnergy=Number(input.value);update();});controls.append(box);
   }
   time=0;update();

@@ -19,20 +19,33 @@ test('every experiment has finite chart traces at default and control extrema', 
     }
   }
 });
-test('current changes absolute ring power while leaving normalized spectral shape unchanged', () => {
-  const a = getView('spectrum', { energy: 3, rho: 10, current: 100 });
-  const b = getView('spectrum', { energy: 3, rho: 10, current: 200 });
+test('current changes magnet power while leaving normalized spectral shape unchanged', () => {
+  const a = getView('spectrum', { energy: 3, rho: 10, current: 100, length:1, spectrumQuantity:'flux', spectrumNormalization:'normalized' });
+  const b = getView('spectrum', { energy: 3, rho: 10, current: 200, length:1, spectrumQuantity:'flux', spectrumNormalization:'normalized' });
   assert.deepEqual(a.traces[0].points, b.traces[0].points);
   assert.notDeepEqual(a.metrics, b.metrics);
 });
 test('spectrum axis includes the selected peak and critical energy at both energy extrema', () => {
   for (const energy of [.25, 10]) for (const rho of [2, 100]) {
     const view = getView('spectrum', { energy, rho, current: 100 });
-    const ec = 2.218 * energy ** 3 / rho;
+    const ec = 2218 * energy ** 3 / rho;
     assert.ok(view.xRange[0] < .1 * ec);
     assert.ok(view.xRange[1] > 3 * ec);
     assert.ok(Math.max(...view.traces[0].points.map(p => p[1])) > .99);
   }
+});
+test('spectrum matches lecture log-log axes and bandwidth quantities', () => {
+  const state={energy:10,rho:100/3,current:100,length:1,spectrumQuantity:'flux',spectrumNormalization:'absolute'};
+  const flux=getView('spectrum',state);
+  assert.equal(flux.logX,true);assert.equal(flux.logY,true);
+  assert.match(flux.xLabel,/eV/);assert.match(flux.yLabel,/0\.1%/);
+  const peak=flux.traces[0].points.reduce((a,b)=>a[1]>b[1]?a:b);
+  assert.ok(peak[0]>17000&&peak[0]<21000);
+  assert.ok(peak[1]>6.7e14&&peak[1]<6.9e14);
+  const power=getView('spectrum',{...state,spectrumQuantity:'power',spectrumNormalization:'normalized'});
+  const powerPeak=power.traces[0].points.reduce((a,b)=>a[1]>b[1]?a:b);
+  assert.ok(powerPeak[0]>60000,'power per relative bandwidth peaks near Ec, not 0.286 Ec');
+  assert.match(power.yLabel,/peak/);
 });
 test('weak-deflection higher undulator harmonics vanish relative to the fundamental', () => {
   const view = getView('insertion', { energy:3, K:.1, period:30, periods:20 });

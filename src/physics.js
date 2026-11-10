@@ -33,10 +33,10 @@ export function angularPolarization(u, v) {
 }
 
 // Integral representations of K_nu and x integral_x^infinity K_5/3(t) dt.
-// Simpson quadrature with an exponentially suppressed tail (< exp(-45)).
+// Simpson quadrature with a tail suppressed by exp(-45) relative to its start.
 function integral(x, fn) {
   if (!(x > 0) || x > 745) return 0;
-  const upper = Math.acosh(Math.max(1.001, 45 / x));
+  const upper = Math.acosh(1 + 45 / x);
   const n = Math.max(80, 2 * Math.ceil(upper / .07));
   const h = upper / n;
   let sum = 0;
@@ -48,6 +48,15 @@ function integral(x, fn) {
 }
 export function spectrum(x) {
   return x * integral(x, t => Math.cosh(5 * t / 3) / Math.cosh(t));
+}
+export function photonFluxPerBandwidth(energyGeV, radiusM, currentMA, lengthM, photonKeV) {
+  const totalFlux = 8.084e20 * energyGeV * (currentMA / 1000) * lengthM / (2 * Math.PI * radiusM);
+  return totalFlux * .001 * spectrum(photonKeV / criticalEnergy(energyGeV, radiusM)) / (5 * Math.PI / 3);
+}
+export function powerPerBandwidth(energyGeV, radiusM, currentMA, lengthM, photonKeV) {
+  const totalWatts = 14.08 * energyGeV ** 4 / radiusM ** 2 * (currentMA / 1000) * lengthM * 1000;
+  const x = photonKeV / criticalEnergy(energyGeV, radiusM);
+  return totalWatts * .001 * x * spectrum(x) / (8 * Math.PI / (9 * Math.sqrt(3)));
 }
 export function vertical(u, ratio) {
   const a = 1 + u * u;

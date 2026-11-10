@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { gamma, criticalEnergy, spectrum, vertical, aberrate, reflectivity, transmission, specularFraction, undulatorEnergy, dipoleProperties, quadrupoleField, quadrupoleProperties, quadrupoleSourceDensity, angularPolarization } from '../src/physics.js';
+import { gamma, criticalEnergy, spectrum, vertical, aberrate, reflectivity, transmission, specularFraction, undulatorEnergy, dipoleProperties, quadrupoleField, quadrupoleProperties, quadrupoleSourceDensity, angularPolarization, photonFluxPerBandwidth, powerPerBandwidth } from '../src/physics.js';
 
 test('electron critical energy follows the lecture and cubic energy scaling at fixed radius', () => {
   assert.ok(Math.abs(criticalEnergy(10, 33.333) - 66.54) < .1);
@@ -17,6 +17,11 @@ test('universal power spectrum peaks near 0.286 and critical energy halves integ
   }
   assert.ok(peak[0] > .26 && peak[0] < .31);
   assert.ok(Math.abs(below / (above + below) - .5) < .015);
+});
+test('the high-energy spectrum retains its exponentially small tail', () => {
+  const x=50;
+  const asymptotic=Math.sqrt(Math.PI*x/2)*Math.exp(-x)*(1+55/(72*x));
+  assert.ok(Math.abs(spectrum(x)/asymptotic-1)<.001);
 });
 test('vertical components are symmetric with zero perpendicular light in the orbit plane', () => {
   assert.equal(vertical(0, 1).pi, 0);
@@ -81,4 +86,28 @@ test('local polarization maps have nodal axes, reflection symmetry and integrate
     sigma+=v.sigma*r;pi+=v.pi*r;
   }
   assert.ok(Math.abs(sigma/(sigma+pi)-7/8)<.0001);
+});
+test('lecture dipole spectrum gives absolute photon flux per 0.1% bandwidth', () => {
+  const ec=criticalEnergy(10,100/3);
+  assert.ok(Math.abs(ec-66.54)<.01);
+  const flux=photonFluxPerBandwidth(10,100/3,100,1,.286*ec);
+  assert.ok(Math.abs(flux/6.766e14-1)<.002);
+  assert.equal(photonFluxPerBandwidth(10,100/3,200,1,ec),2*photonFluxPerBandwidth(10,100/3,100,1,ec));
+  assert.equal(photonFluxPerBandwidth(10,100/3,100,2,ec),2*photonFluxPerBandwidth(10,100/3,100,1,ec));
+});
+test('flux and power per relative bandwidth integrate to magnet totals and differ by photon energy', () => {
+  const E=10,rho=100/3,I=100,L=1,ec=criticalEnergy(E,rho),dlog=32/1600;
+  let flux=0,power=0;
+  for(let i=0;i<1600;i++){
+    const x=Math.exp(-28+(i+.5)*dlog);
+    flux+=photonFluxPerBandwidth(E,rho,I,L,x*ec)*dlog/.001;
+    power+=powerPerBandwidth(E,rho,I,L,x*ec)*dlog/.001;
+  }
+  const totalFlux=8.084e20*E*(I/1000)*L/(2*Math.PI*rho);
+  const totalPower=14.08*E**4/rho**2*(I/1000)*L*1000;
+  assert.ok(Math.abs(flux/totalFlux-1)<.005);
+  assert.ok(Math.abs(power/totalPower-1)<.001);
+  const ratio=e=>powerPerBandwidth(E,rho,I,L,e)/photonFluxPerBandwidth(E,rho,I,L,e);
+  assert.ok(Math.abs(ratio(2*ec)/ratio(ec)-2)<1e-10);
+  assert.ok(Math.abs(ratio(ec)/(ec*1.602176634e-16)-1)<.002);
 });

@@ -1,4 +1,4 @@
-import {gamma, criticalEnergy, spectrum, vertical, reflectivity, criticalAngle, attenuation, transmission, specularFraction, undulatorEnergy, sinc, harmonicCoupling, dipoleProperties, quadrupoleProperties, quadrupoleSourceDensity, angularPolarization} from './physics.js';
+import {gamma, criticalEnergy, spectrum, vertical, reflectivity, criticalAngle, attenuation, transmission, specularFraction, undulatorEnergy, sinc, harmonicCoupling, dipoleProperties, quadrupoleProperties, quadrupoleSourceDensity, angularPolarization, photonFluxPerBandwidth, powerPerBandwidth} from './physics.js';
 
 export const colors = { cyan: '#208f86', amber: '#d69b4b', purple: '#9884c3', grey: '#b6c6c6' };
 const sample = (a,b,n,fn) => Array.from({length:n+1},(_,i) => {const x=a+(b-a)*i/n; return [x,fn(x)];});
@@ -13,14 +13,26 @@ function erf(x) {const sign=Math.sign(x);x=Math.abs(x);const t=1/(1+.3275911*x);
 export function getView(id,s) {
   const E=s.energy??3, g=gamma(E), ec=criticalEnergy(E,s.rho??10);
   if(id==='spectrum') {
-    const ref=criticalEnergy(3,s.rho), power=88.46*E**4/s.rho*s.current/1000;
-    const lo=10**Math.floor(Math.log10(Math.min(ec,ref)*.005)),hi=10**Math.ceil(Math.log10(Math.max(ec,ref)*20));
-    return base('Where the energy goes','Photon energy (keV)',[lo,hi],[metric('Critical energy',`${fmt(ec)} keV`),metric('Mean photon energy',`${fmt(ec*8/(15*Math.sqrt(3)))} keV`),metric('Full-ring power',`${fmt(power)} kW`),metric('Natural cone · 1/γ',`${fmt(1e6/g)} µrad`)],{
-      logX:true,badge:'LOG ENERGY AXIS',yLabel:'Spectral power (relative peak)',
-      traces:[trace(`${fmt(E)} GeV electrons`,colors.cyan,logSample(lo,hi,500,x=>spectrum(x/ec)/.918)),trace('3 GeV reference',colors.grey,logSample(lo,hi,500,x=>spectrum(x/ref)/.918),true)],
-      markers:[{x:ec,label:`Ec · ${fmt(ec)} keV`,color:colors.amber}],
-      caption:'F(Eph / Ec), normalized to its peak. Equal areas of power lie below and above Ec when integrated on a linear photon-energy axis. Current changes total power, not this shape.',
-      legend:[['Electrons','#55d9d0'],['Emitted photons','#f5bc70']],note:'E is electron energy; ρ is bending radius. The full-ring power assumes a constant bending radius.'});
+    const ref=criticalEnergy(10,s.rho),length=s.length??1,normalized=s.spectrumNormalization==='normalized',isPower=s.spectrumQuantity==='power';
+    const fn=isPower?powerPerBandwidth:photonFluxPerBandwidth;
+    const lo=10**Math.floor(Math.log10(Math.min(ec,ref)*1000*.001)),hi=10**Math.ceil(Math.log10(Math.max(ec,ref)*1000*30));
+    const make=(energy,color,name,dashed=false)=>{
+      const critical=criticalEnergy(energy,s.rho),peak=fn(energy,s.rho,s.current,length,critical*(isPower?1.32843:.285812));
+      return trace(name,color,logSample(lo,hi,700,x=>fn(energy,s.rho,s.current,length,x/1000)/(normalized?peak:1)),dashed);
+    };
+    const traces=[make(E,colors.cyan,`${fmt(E)} GeV electrons`),make(10,colors.grey,'10 GeV reference',true)];
+    const peak=Math.max(...traces.flatMap(t=>t.points.map(p=>p[1])));
+    const yRange=normalized?[1e-6,1.3]:[10**(Math.floor(Math.log10(peak))-6),10**Math.ceil(Math.log10(peak))];
+    const totalPower=14.08*E**4/s.rho**2*(s.current/1000)*length;
+    const flux=8.084e20*E*(s.current/1000)*length/(2*Math.PI*s.rho);
+    return base(isPower?'Radiated power per 0.1% bandwidth':'Photon flux per 0.1% bandwidth','Photon energy (eV)',[lo,hi],[metric('Critical energy',`${fmt(ec)} keV`),metric('Dipole bend · L/ρ',`${fmt(1000*length/s.rho)} mrad`),metric('Total dipole photon flux',`${fmt(flux)} /s`),metric('Total dipole power',`${fmt(totalPower)} kW`)],{
+      logX:true,logY:true,yRange,badge:'LOG–LOG · 0.1% BANDWIDTH',
+      yLabel:normalized?`${isPower?'Power':'Photon flux'} / peak`:isPower?'Power (W/0.1% BW)':'Photon flux (photons/s/0.1% BW)',traces,
+      markers:[{x:1000*ec,label:`Ec · ${fmt(ec)} keV`,color:colors.amber}],
+      caption:`${isPower?'Power per relative bandwidth ∝ xF(x); its peak is near 1.33 Ec.':'Photon flux per relative bandwidth ∝ F(x); its peak is near 0.286 Ec.'} ${normalized?'Each curve is divided by its own peak.':'Absolute rates for the selected dipole length and beam current, integrated over vertical angles.'} Both axes are logarithmic. Equal-power halves at Ec refer to integrated power, not visible area on this log–log plot.`,
+      legend:[['Electrons','#55d9d0'],['Emitted photons','#f5bc70']],
+      equation:isPower?'dP / d(0.1% BW) ∝ xF(x);  x = Eph/Ec':'dN / dt / d(0.1% BW) ∝ F(x);  x = Eph/Ec',
+      note:'A 0.1% band has width ΔEph = 0.001 Eph. The 10 GeV reference uses the same radius, length and current. At ρ = 33.33 m, its Ec ≈ 66.5 keV, as in the lecture.'});
   }
   if(id==='frames') {
     const G=s.gammaDemo,beta=Math.sqrt(1-1/G**2);
@@ -98,10 +110,10 @@ export function getView(id,s) {
     const lo=10**Math.floor(Math.log10(Math.min(d.criticalKeV||ref,ref)*.005)),hi=10**Math.ceil(Math.log10(Math.max(d.criticalKeV,ref)*20));
     return base('The spectrum from a uniform bend','Photon energy (keV)',[lo,hi],[
       metric('Bending radius',s.field===0?'∞ · straight':`${fmt(d.radius)} m`),metric('Bend angle',`${fmt(d.bendMrad)} mrad`),metric('Critical energy',`${fmt(d.criticalKeV,3)} keV`),metric('Single-magnet power',`${fmt(d.powerKW)} kW`)],{
-      logX:true,badge:'UNIFORM FIELD',yLabel:'Spectral power (relative peak)',
+      logX:true,badge:'UNIFORM FIELD · dP/dE',yLabel:'dP/dEph / peak',
       traces:[trace(`${fmt(s.field)} T dipole`,colors.cyan,logSample(lo,hi,450,x=>s.field===0?0:spectrum(x/d.criticalKeV)/.918)),trace('0.2 T reference',colors.grey,logSample(lo,hi,450,x=>spectrum(x/ref)/.918),true)],
       markers:s.field===0?[]:[{x:d.criticalKeV,label:`Ec · ${fmt(d.criticalKeV)} keV`,color:colors.amber}],
-      caption:'Universal spectral shape normalized to its peak; the readout gives absolute single-magnet power. Zero field gives zero radiation. The reference keeps electron energy fixed at a 0.2 T field.',
+      caption:'Spectral power per unit photon energy, dP/dEph ∝ F(Eph/Ec), normalized to its peak. This differs from power per relative bandwidth on the Spectrum tab, which has an extra Eph factor. The readout gives total single-magnet power. Zero field gives zero radiation; the reference uses 0.2 T at the same electron energy.',
       legend:[['Electron orbit','#55d9d0'],['Tangential photons','#f5bc70'],['Magnetic field','#b5a0ff']],note:'Magnetic rigidity uses p ≈ E/c for ultrarelativistic electrons. Δθ = L/ρ. At fixed B, Ec ∝ E² and power ∝ E² B² I L.'});
   }
   if(id==='quadrupole') {
