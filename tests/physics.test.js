@@ -41,7 +41,8 @@ test('rest-frame angular power has a dipole null along acceleration and a transv
 test('transverse lab radiation beams forward and matches the exact orbit-plane null', () => {
   for(const G of [1,2,5,30]){
     const beta=Math.sqrt(1-1/G**2);
-    assert.equal(transverseRadiation(0,0,G),1);
+    // Powers and divisions may differ by a rounding bit across Node/V8 builds.
+    assert.ok(Math.abs(transverseRadiation(0,0,G)-1)<1e-12,`forward peak at γ=${G}`);
     const expected=((1-beta)/(1+beta))**3;
     assert.ok(Math.abs(transverseRadiation(Math.PI,0,G)/expected-1)<1e-10);
     if(G>1)assert.ok(transverseRadiation(Math.acos(beta),0,G)<1e-20);
