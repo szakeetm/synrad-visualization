@@ -19,7 +19,7 @@ export const experiments = [
     slides: '7–12',
     controls: [{ ...energy(), max: 500, presets: [1, 5, 10, 50, 100, 500] },
       { key: 'spectrumQuantity', label: 'Quantity per 0.1% bandwidth', default: 'flux', options: [{ value: 'flux', label: 'Photon flux · photons/s/0.1% BW' }, { value: 'power', label: 'Radiated power · W/0.1% BW' }] },
-      { key: 'spectrumNormalization', label: 'Vertical scale', default: 'absolute', options: [{ value: 'absolute', label: 'Absolute · lecture slide 9' }, { value: 'normalized', label: 'Relative to each curve’s peak' }] },
+      { key: 'spectrumNormalization', label: 'Spectrum normalization', default: 'absolute', options: [{ value: 'absolute', label: 'Absolute · lecture slide 9' }, { value: 'normalized', label: 'Relative to each curve’s peak' }] },
       { key: 'rho', label: 'Bending radius', min: 2, max: 100, step: .01, unit: 'm', default: 33.33 },
       { key: 'length', label: 'Dipole length', min: .1, max: 3, step: .1, unit: 'm', default: 1 },
       { key: 'current', label: 'Beam current', min: 10, max: 500, step: 10, unit: 'mA', default: 100 }],

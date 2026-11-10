@@ -9,4 +9,5 @@ main{margin-left:238px;padding:0 42px;max-width:1740px}.topbar{height:82px;borde
 .footer-info{display:flex;flex-wrap:wrap;gap:8px 20px}
 [hidden]{display:none!important}
 .control-presets{display:flex;gap:4px;flex-wrap:wrap;margin-top:11px}.control-presets button{flex:1;min-width:27px;padding:5px 3px;font-size:9px;color:#52796e;background:#f0f6f3;border:1px solid #e0e9e3;border-radius:4px}.control-presets button:hover{background:#dceee6}
+.chart-scale-controls{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}.axis-toggle{display:flex;align-items:center;gap:2px;font-size:9px;color:#7c9295}.axis-toggle>span{margin-right:6px}.axis-toggle button{font-size:9px;padding:5px 8px;border:1px solid #e1e9e5;background:#f8faf9;color:#8a9b9c;border-radius:4px}.axis-toggle button[aria-pressed=true]{background:#e5f2ec;color:#217d6b;border-color:#b9d8cb}#chart-scale-note{font-size:8px;color:#8b9c9f;line-height:1.5}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important}}

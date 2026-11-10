@@ -1,25 +1,66 @@
 const NS='http://www.w3.org/2000/svg';
 const el=(tag,attrs,text)=>{const e=document.createElementNS(NS,tag);for(const [k,v]of Object.entries(attrs??{}))e.setAttribute(k,v);if(text!==undefined)e.textContent=text;return e;};
-const nice=n=>n===0?'0':Math.abs(n)>=1e6||Math.abs(n)<.001?n.toExponential(0):Math.abs(n)>=1000?`${Number((n/1000).toPrecision(3))}k`:Number(n.toPrecision(3)).toString();
+const nice=n=>n===0?'0':Math.abs(n)>=1e6||Math.abs(n)<.001?Number(n.toPrecision(3)).toExponential():Math.abs(n)>=1000?`${Number((n/1000).toPrecision(3))}k`:Number(n.toPrecision(3)).toString();
 
-export function chartYFraction(value,range,logarithmic=false) {
+export function axisFraction(value,range,logarithmic=false,symmetric=false) {
+  if(logarithmic&&symmetric){
+    const threshold=Math.max(Math.abs(range[0]),Math.abs(range[1]))/100;
+    const transform=x=>Math.sign(x)*Math.log10(1+Math.abs(x)/threshold);
+    return (transform(value)-transform(range[0]))/(transform(range[1])-transform(range[0]));
+  }
   return logarithmic
     ? (Math.log10(Math.max(value,Number.MIN_VALUE))-Math.log10(range[0]))/(Math.log10(range[1])-Math.log10(range[0]))
     : (value-range[0])/(range[1]-range[0]);
 }
 
+export function axisTicks(range,logarithmic=false,symmetric=false) {
+  if(logarithmic&&symmetric){
+    const max=Math.max(Math.abs(range[0]),Math.abs(range[1]));
+    return [-max,-max/10,-max/100,0,max/100,max/10,max].filter(x=>x>=range[0]&&x<=range[1]);
+  }
+  if(logarithmic){
+    const first=Math.ceil(Math.log10(range[0])),last=Math.floor(Math.log10(range[1]));
+    if(last<first)return range;
+    const step=Math.max(1,Math.ceil((last-first)/9));
+    return Array.from({length:Math.floor((last-first)/step)+1},(_,i)=>10**(first+i*step));
+  }
+  const target=(range[1]-range[0])/4,power=10**Math.floor(Math.log10(target));
+  const step=[1,2,2.5,5,10].map(x=>x*power).reduce((best,x)=>Math.abs(x-target)<Math.abs(best-target)?x:best);
+  const start=Math.ceil(range[0]/step)*step;
+  return Array.from({length:Math.max(1,Math.floor((range[1]-start)/step+1e-10)+1)},(_,i)=>Number((start+i*step).toPrecision(12)));
+}
+
+export function prepareChartScales(source,overrides={}) {
+  const logX=overrides.x?overrides.x==='log':!!source.logX;
+  const logY=overrides.y?overrides.y==='log':!!source.logY;
+  const symlogX=logX&&source.xRange[0]<0;
+  let xRange=[...source.xRange],yRange=[...source.yRange];
+  if(logX&&!symlogX&&xRange[0]<=0){
+    const positive=source.traces.flatMap(t=>t.points.filter(p=>p[0]>0&&p[0]<=xRange[1]).map(p=>p[0]));
+    xRange[0]=positive.length?Math.min(...positive):xRange[1]*1e-6;
+  }else if(!logX&&source.logX&&xRange[0]>0)xRange[0]=0;
+  const maxY=Math.max(...source.traces.flatMap(t=>t.points.map(p=>p[1])));
+  if(logY&&yRange[0]<=0)yRange[0]=(maxY||yRange[1])*1e-6;
+  if(!logY&&source.logY)yRange=[0,maxY>0?maxY*1.08:source.yRange[1]];
+  return {...source,logX,logY,symlogX,xRange,yRange};
+}
+
+export function chartYFraction(value,range,logarithmic=false) {
+  return axisFraction(value,range,logarithmic);
+}
+
 export function drawChart(container,view) {
   const w=760,h=250,m={l:62,r:20,t:25,b:48},pw=w-m.l-m.r,ph=h-m.t-m.b;
-  const svg=el('svg',{viewBox:`0 0 ${w} ${h}`,role:'img','aria-label':`${view.title}. X axis: ${view.xLabel}. Y axis: ${view.yLabel}.`});
+  const svg=el('svg',{viewBox:`0 0 ${w} ${h}`,role:'img','aria-label':`${view.title}. X axis: ${view.xLabel} (${view.symlogX?'symmetric logarithmic':view.logX?'logarithmic':'linear'}). Y axis: ${view.yLabel} (${view.logY?'logarithmic':'linear'}).`});
   svg.append(el('title',{},view.title),el('desc',{},view.caption));
-  const tx=x=>m.l+pw*(view.logX?(Math.log10(x)-Math.log10(view.xRange[0]))/(Math.log10(view.xRange[1])-Math.log10(view.xRange[0])):(x-view.xRange[0])/(view.xRange[1]-view.xRange[0]));
+  const tx=x=>m.l+pw*axisFraction(x,view.xRange,view.logX,view.symlogX);
   const ty=y=>m.t+ph*(1-chartYFraction(y,view.yRange,view.logY));
-  const yTicks=view.logY?Array.from({length:Math.floor(Math.log10(view.yRange[1]))-Math.ceil(Math.log10(view.yRange[0]))+1},(_,i)=>10**(Math.ceil(Math.log10(view.yRange[0]))+i)):[0,.25,.5,.75,1];
+  const yTicks=axisTicks(view.yRange,view.logY);
   for(const y of yTicks) {
     svg.append(el('line',{x1:m.l,y1:ty(y),x2:w-m.r,y2:ty(y),stroke:'#e7eeeb','stroke-width':1}));
     svg.append(el('text',{x:m.l-11,y:ty(y)+3,'text-anchor':'end',fill:'#94a5a8','font-size':10},nice(y)));
   }
-  const ticks=view.logX?Array.from({length:Math.floor(Math.log10(view.xRange[1])-Math.log10(view.xRange[0]))+1},(_,i)=>10**(Math.log10(view.xRange[0])+i)):Array.from({length:5},(_,i)=>view.xRange[0]+(view.xRange[1]-view.xRange[0])*i/4);
+  const ticks=axisTicks(view.xRange,view.logX,view.symlogX);
   for(const x of ticks) {
     svg.append(el('line',{x1:tx(x),x2:tx(x),y1:m.t,y2:h-m.b,stroke:'#edf1ef','stroke-width':1,'stroke-dasharray':'2 4'}));
     svg.append(el('text',{x:tx(x),y:h-m.b+18,'text-anchor':'middle',fill:'#94a5a8','font-size':10},nice(x)));

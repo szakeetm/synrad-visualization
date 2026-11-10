@@ -1,6 +1,6 @@
 import {experiments} from './experiments.js';
 import {getView,fmt} from './views.js';
-import {drawChart} from './chart.js';
+import {drawChart,prepareChartScales} from './chart.js';
 import {renderSource} from './source-scenes.js';
 import {renderMaterial} from './material-scenes.js';
 import {renderMagnet} from './magnet-scenes.js';
@@ -8,6 +8,7 @@ import {renderPolarization} from './polarization-scenes.js';
 
 const $=id=>document.getElementById(id);
 const states=Object.fromEntries(experiments.map(e=>[e.id,Object.fromEntries(e.controls.map(c=>[c.key,c.default]))]));
+const plotScales={};
 let selected=experiments[0],sharedEnergy=3,time=0,last=0,paused=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const canvas=$('scene'),ctx=canvas.getContext('2d');
 const set=(id,value)=>$(id).textContent=value;
@@ -44,7 +45,10 @@ function update() {
   const state=states[selected.id];
   for(const c of selected.controls){const box=$(`control-${c.key}`).closest('.control');box.hidden=!!c.showWhen&&state[c.showWhen.key]!==c.showWhen.value;}
   for(const c of selected.controls)if(!c.options){const value=state[c.key];const decimals=String(c.step).split('.')[1]?.length??0;set(`value-${c.key}`,`${fmt(value,decimals)} ${c.unit}`.trim());$(`control-${c.key}`).setAttribute('aria-valuetext',`${value} ${c.unit}`);}
-  const view=getView(selected.id,state);
+  const sourceView=getView(selected.id,state),view=prepareChartScales(sourceView,plotScales[selected.id]);
+  for(const axis of ['x','y'])for(const scale of ['linear','log'])$(`${axis}-${scale}`).setAttribute('aria-pressed',String((axis==='x'?view.logX:view.logY)===(scale==='log')));
+  const signed=sourceView.xRange[0]<0;$('x-log').textContent=signed?'Sym log':'Log';
+  set('chart-scale-note',view.symlogX?'Sym log keeps ± angles and zero; linear near zero.':view.logX&&sourceView.xRange[0]===0?'X = 0 is omitted on a log axis.':'');
   set('chart-title',view.title);set('chart-badge',view.badge);set('chart-caption',view.caption);set('equation',view.equation??selected.equation);set('equation-note',view.note);drawChart($('chart'),view);
   legend($('chart-legend'),view.traces.map(t=>[t.name,t.color]));legend($('scene-legend'),view.legend);
   $('metrics').replaceChildren(...view.metrics.map(m=>{const div=document.createElement('div');div.className='metric';const name=document.createElement('span');name.className='metric-name';name.textContent=m.name;const value=document.createElement('span');value.className='metric-value';value.textContent=m.value;div.append(name,value);return div;}));
@@ -53,7 +57,8 @@ function update() {
 function draw(){ctx.clearRect(0,0,900,400);ctx.fillStyle='#101d29';ctx.fillRect(0,0,900,400);ctx.strokeStyle='#7a9eab0b';ctx.lineWidth=1;for(let x=0;x<900;x+=30){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,400);ctx.stroke();}for(let y=0;y<400;y+=30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(900,y);ctx.stroke();}renderPolarization(ctx,900,400,selected.id,states[selected.id],time)||renderMagnet(ctx,900,400,selected.id,states[selected.id],time)||renderSource(ctx,900,400,selected.id,states[selected.id],time)||renderMaterial(ctx,900,400,selected.id,states[selected.id],time);}
 function setPaused(value){paused=value;$('pause').textContent=paused?'▶ Play':'Ⅱ Pause';$('pause').setAttribute('aria-pressed',String(paused));set('scene-label',paused?'EXPERIMENT PAUSED':'LIVE EXPERIMENT');}
 $('pause').addEventListener('click',()=>setPaused(!paused));
-$('reset').addEventListener('click',()=>{states[selected.id]=Object.fromEntries(selected.controls.map(c=>[c.key,c.default]));if('energy'in states[selected.id])sharedEnergy=3;select(selected.id);});
+$('reset').addEventListener('click',()=>{delete plotScales[selected.id];states[selected.id]=Object.fromEntries(selected.controls.map(c=>[c.key,c.default]));if('energy'in states[selected.id])sharedEnergy=3;select(selected.id);});
+for(const axis of ['x','y'])for(const scale of ['linear','log'])$(`${axis}-${scale}`).addEventListener('click',()=>{plotScales[selected.id]={...plotScales[selected.id],[axis]:scale};update();});
 $('next').addEventListener('click',()=>{location.hash=experiments[(experiments.indexOf(selected)+1)%experiments.length].id;});
 $('about-button').addEventListener('click',()=>$('about').showModal());$('close-about').addEventListener('click',()=>$('about').close());
 $('about').addEventListener('click',e=>{if(e.target===$('about')){const r=$('about').getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)$('about').close();}});

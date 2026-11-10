@@ -26,10 +26,10 @@ export function getView(id,s) {
     const totalPower=14.08*E**4/s.rho**2*(s.current/1000)*length;
     const flux=8.084e20*E*(s.current/1000)*length/(2*Math.PI*s.rho);
     return base(isPower?'Radiated power per 0.1% bandwidth':'Photon flux per 0.1% bandwidth','Photon energy (eV)',[lo,hi],[metric('Critical energy',`${fmt(ec)} keV`),metric('Dipole bend · L/ρ',`${fmt(1000*length/s.rho)} mrad`),metric('Total dipole photon flux',`${fmt(flux)} /s`),metric('Total dipole power',`${fmt(totalPower)} kW`)],{
-      logX:true,logY:true,yRange,badge:'LOG–LOG · 0.1% BANDWIDTH',
+      logX:true,logY:true,yRange,badge:'0.1% BANDWIDTH',
       yLabel:normalized?`${isPower?'Power':'Photon flux'} / peak`:isPower?'Power (W/0.1% BW)':'Photon flux (photons/s/0.1% BW)',traces,
       markers:[{x:1000*ec,label:`Ec · ${fmt(ec)} keV`,color:colors.amber}],
-      caption:`${isPower?'Power per relative bandwidth ∝ xF(x); its peak is near 1.33 Ec.':'Photon flux per relative bandwidth ∝ F(x); its peak is near 0.286 Ec.'} ${normalized?'Each curve is divided by its own peak.':'Absolute rates for the selected dipole length and beam current, integrated over vertical angles.'} Both axes are logarithmic. Equal-power halves at Ec refer to integrated power, not visible area on this log–log plot.`,
+      caption:`${isPower?'Power per relative bandwidth ∝ xF(x); its peak is near 1.33 Ec.':'Photon flux per relative bandwidth ∝ F(x); its peak is near 0.286 Ec.'} ${normalized?'Each curve is divided by its own peak.':'Absolute rates for the selected dipole length and beam current, integrated over vertical angles.'} Critical energy halves integrated power; visual areas depend on axis scale and bandwidth measure.`,
       legend:[['Electrons','#55d9d0'],['Emitted photons','#f5bc70']],
       equation:isPower?'dP / d(0.1% BW) ∝ xF(x);  x = Eph/Ec':'dN / dt / d(0.1% BW) ∝ F(x);  x = Eph/Ec',
       note:'A 0.1% band has width ΔEph = 0.001 Eph. The 10 GeV reference uses the same radius, length and current. At ρ = 33.33 m, its Ec ≈ 66.5 keV, as in the lecture.'});
