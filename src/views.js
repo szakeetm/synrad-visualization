@@ -162,7 +162,11 @@ export function getView(id,s) {
       return (1-blend)*v+blend*spectrum(x/ecW)/.918;
     });
     const max=Math.max(...points.map(p=>p[1]));
+    // Fit the broad envelope on log axes; cap the range at six decades for interference nulls.
+    const minPositive=Math.min(...points.filter(p=>p[1]>0).map(p=>p[1]))/max;
+    const logYRange=[Math.max(1e-6,10**Math.floor(Math.log10(minPositive))),1.08];
     return base('From narrow harmonics to a broad envelope','Photon energy (keV)',[0,xmax],[metric('Regime',s.K<1?'Undulator':s.K<3?'Transition':'Wiggler-like'),metric('On-axis fundamental',`${fmt(e1,3)} keV`),metric('Peak magnetic field',`${fmt(field,3)} T`),metric('Fundamental linewidth scale',`~ ${fmt(100/s.periods)}%`)],{
+      logYRange,
       traces:[trace('Illustrative spectral shape',colors.cyan,points.map(([x,y])=>[x,y/max]))],markers:[{x:e1,label:'E₁',color:colors.amber}],badge:'ILLUSTRATIVE SPECTRUM',
       caption:'Finite wave-train peaks (odd harmonics), blended into an angle-integrated wiggler-like envelope as K grows. Relative peak normalized; not a full on-axis radiation calculation.',
       legend:[['Electron orbit','#55d9d0'],['Radiation','#f5bc70']],note:'λu is the magnetic period; θ is observation angle. The readout uses θ = 0. Linewidth scale is 1/N.'});

@@ -35,6 +35,7 @@ export function prepareChartScales(source,overrides={}) {
   const logY=overrides.y?overrides.y==='log':!!source.logY;
   const symlogX=logX&&source.xRange[0]<0;
   let xRange=[...source.xRange],yRange=[...source.yRange];
+  if(logY&&source.logYRange)yRange=[...source.logYRange];
   if(logX&&!symlogX&&xRange[0]<=0){
     const positive=source.traces.flatMap(t=>t.points.filter(p=>p[0]>0&&p[0]<=xRange[1]).map(p=>p[0]));
     xRange[0]=positive.length?Math.min(...positive):xRange[1]*1e-6;
