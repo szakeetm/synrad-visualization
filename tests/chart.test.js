@@ -36,6 +36,18 @@ test('signed logarithmic axes preserve negative directions and the central plane
   assert.ok(axisFraction(1,view.xRange,true,true)>.5);
   assert.ok(view.yRange[0]>0);
 });
+test('insertion log axes fit the broad envelope without empty decades below it', () => {
+  for(const K of [3,5,8]){
+    const source=getView('insertion',{energy:3,K,period:30,periods:20});
+    const view=prepareChartScales(source,{x:'log',y:'log'});
+    const minimum=Math.min(...view.traces[0].points.map(p=>p[1]));
+    assert.ok(view.yRange[0]<=minimum,'keep the entire envelope visible');
+    assert.ok(minimum/view.yRange[0]<10,'leave less than one empty decade below the curve');
+    assert.equal(prepareChartScales(source,{y:'linear'}).yRange[0],0);
+  }
+  const narrow=prepareChartScales(getView('insertion',{energy:3,K:1,period:30,periods:20}),{x:'log',y:'log'});
+  assert.ok(narrow.yRange[0]<=1e-6,'retain dynamic range for harmonic troughs');
+});
 test('linear axes on an absolute spectrum use absolute y ticks and zero baseline', () => {
   const source=getView('spectrum',{energy:10,rho:100/3,current:100,length:1,spectrumQuantity:'flux',spectrumNormalization:'absolute'});
   const view=prepareChartScales(source,{x:'linear',y:'linear'});

@@ -21,6 +21,10 @@ main{margin-left:238px;padding:0 42px;max-width:1740px}.topbar{height:44px;borde
 #scene-pan-hint{margin:0;padding:10px 12px;font-size:11px;line-height:1.5}
 @media(min-width:901px){#scene-pan-hint{display:none}}
 @media(max-width:900px){
+  /* Stack the widget, controls, then plots in the single-column layout. */
+  .visual-column{display:contents}
+  .control-card{order:1}
+  .chart-card{order:2;margin-top:0}
   #scene-zoom{display:block}
   .scene-viewport.enlarged canvas{width:900px;max-width:none}
 }
