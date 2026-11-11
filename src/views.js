@@ -115,26 +115,20 @@ export function getView(id,s) {
       legend:[['Electron trajectory','#55d9d0'],['Emitted tangent rays','#f5bc70']],note:'L is distance from source to screen, Δθ is the magnet bend angle. Finite magnet length is omitted from the footprint.'});
   }
   if(id==='reflection') {
-    const R=reflectivity(s.photon,s.grazing,s.material),ac=criticalAngle(s.photon,s.material);
-    return base('How much light reflects?','Grazing angle (mrad)',[0,50],[metric('Reflected fraction',percent(R)),metric('Critical-angle estimate',`${fmt(ac)} mrad`),metric('Photon wavelength',`${fmt(1.23984/s.photon,3)} nm`)],{
-      traces:[trace(`${s.material} · ${s.photon} keV`,colors.cyan,sample(.001,50,400,a=>reflectivity(s.photon,a,s.material)))],
-      markers:[{x:s.grazing,label:'Your angle',color:colors.amber}],badge:'ILLUSTRATIVE OPTICS',yLabel:'Reflectivity',caption:'Approximate s-polarized Fresnel intensity reflectivity. Free-electron optical constants and illustrative absorption omit material absorption edges.',
-      legend:[['Incident','#55d9d0'],['Reflected','#f5bc70'],['Into material','#b5a0ff']],note:'δ depends on electron density and wavelength. This estimate does not use measured optical tables.'});
+    const sigma=s.roughness??0;
+    const R=reflectivity(s.photon,s.grazing,s.material),fraction=specularFraction(s.photon,s.grazing,sigma),ac=criticalAngle(s.photon,s.material);
+    return base('Specular reflection vs. grazing angle','Grazing angle (mrad)',[0,50],[metric('Specular reflection',percent(R*fraction)),metric('Smooth-surface reflection',percent(R)),metric('Critical-angle estimate',`${fmt(ac)} mrad`)],{
+      traces:[trace(`${s.material} · σ = ${sigma} nm`,colors.cyan,sample(.001,50,400,a=>reflectivity(s.photon,a,s.material)*specularFraction(s.photon,a,sigma))),trace('Smooth surface',colors.grey,sample(.001,50,400,a=>reflectivity(s.photon,a,s.material)),true)],
+      markers:[{x:s.grazing,label:'Selected angle',color:colors.amber}],badge:'ILLUSTRATIVE OPTICS',yLabel:'Specular reflectivity',caption:'Roughness suppresses the specular beam; the animated scattering fan shows directions only, not diffuse intensity. Approximate optical constants omit absorption edges.',
+      legend:[['Incident','#55d9d0'],['Specular','#f5bc70'],['Scattering schematic','#b5a0ff']],note:'The smooth-surface curve uses material-dependent approximate Fresnel optics. RMS roughness is a height; surface correlations are needed to predict scattering.'});
   }
   if(id==='penetration') {
     const mu=attenuation(s.photon,s.material),T=transmission(s.photon,s.thickness,s.material);
     const max=Math.max(50,s.thickness*1.3,Math.min(1000,5/mu));
-    return base('Every layer takes a share','Depth into material (µm)',[0,max],[metric('Transmitted fraction',percent(T)),metric('Removed from beam',percent(1-T)),metric('Attenuation length · 1/μ',`${fmt(1/mu)} µm`)],{
+    return base('Transmission vs. depth','Depth into material (µm)',[0,max],[metric('Transmitted fraction',percent(T)),metric('Removed from beam',percent(1-T)),metric('Attenuation length · 1/μ',`${fmt(1/mu)} µm`)],{
       traces:[trace('Surviving beam',colors.cyan,sample(0,max,400,t=>transmission(s.photon,t,s.material))),trace('2× photon energy',colors.purple,sample(0,max,400,t=>transmission(s.photon*2,t,s.material)),true)],
       markers:[{x:s.thickness,label:'Your thickness',color:colors.amber}],badge:'BEER–LAMBERT LAW',yLabel:'Transmission · I / I₀',caption:'Illustrative μ ∝ Eph⁻³ with material-specific example coefficients. The dashed trace shows why harder photons penetrate farther. No absorption-edge data is used.',
       legend:[['Incident','#55d9d0'],['Transmitted','#f5bc70'],['Absorbed','#b5a0ff']],note:'t is normal-incidence thickness. μ is a linear attenuation coefficient; 1/μ is the depth for 1/e survival.'});
-  }
-  if(id==='rough') {
-    const r=reflectivity(s.photon,s.grazing,'Cu'),fraction=specularFraction(s.photon,s.grazing,s.roughness);
-    return base('Roughness erases the specular beam','RMS surface roughness σ (nm)',[0,3],[metric('Specular reflection',percent(r*fraction)),metric('Smooth-surface reflection',percent(r)),metric('Coherent fraction Rspec/Rsmooth',percent(fraction))],{
-      traces:[trace('Rough copper surface',colors.cyan,sample(0,3,300,z=>r*specularFraction(s.photon,s.grazing,z))),trace('Perfectly smooth',colors.grey,[[0,r],[3,r]],true)],
-      markers:[{x:s.roughness,label:'Your surface',color:colors.amber}],badge:'COHERENT REFLECTION',yLabel:'Specular reflectivity',caption:'The plot predicts specular suppression only. The scene’s scattered directions are qualitative; no diffuse-reflection probability or BSDF is calculated.',
-      legend:[['Incident','#55d9d0'],['Specular','#f5bc70'],['Scattering schematic','#b5a0ff']],note:'RMS roughness is a height, not a surface slope. Correlation length is needed to predict a real scattering distribution.'});
   }
   if(id==='dipole') {
     const d=dipoleProperties(E,s.field,s.length,s.current),ref=.665*.2*E**2;

@@ -2,7 +2,23 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { experiments } from '../src/experiments.js';
 import { getView } from '../src/views.js';
-import {transverseRadiation} from '../src/physics.js';
+import {reflectivity, specularFraction, transverseRadiation} from '../src/physics.js';
+
+test('merged reflection page calculates smooth and rough material reflection without a multiplier', () => {
+  assert.ok(!experiments.some(e=>e.id==='rough'));
+  const exp=experiments.find(e=>e.id==='reflection');
+  const defaults=Object.fromEntries(exp.controls.map(c=>[c.key,c.default]));
+  assert.ok(!('reflectionAmount' in defaults));
+  const smooth=getView('reflection',defaults);
+  assert.ok(smooth.traces[0].points.some(([,y])=>y>0));
+  for (const material of ['Cu','Al','Si']) for (const photon of [.1,5,30]) for (const roughness of [0,1,3]) {
+    const view=getView('reflection',{...defaults,material,photon,roughness});
+    for (const [angle,value] of view.traces[0].points) {
+      assert.equal(value,reflectivity(photon,angle,material)*specularFraction(photon,angle,roughness));
+    }
+    for (const [angle,value] of view.traces[1].points) assert.equal(value,reflectivity(photon,angle,material));
+  }
+});
 
 test('cavity defaults show the 45.6 GeV microradian cone and downstream transport',()=>{
   const e=experiments.find(e=>e.id==='cavity'),s=Object.fromEntries(e.controls.map(c=>[c.key,c.default]));

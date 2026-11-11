@@ -44,27 +44,6 @@ function surface(ctx, y, material, roughness = 0) {
   label(ctx, `${material} surface`, 110, 331, C.ink);
 }
 
-function reflection(ctx, s, time) {
-  const e = s.photon ?? 5, grazing = s.grazing ?? 5, mat = s.material ?? 'Cu';
-  const R = clamp(reflectivity(e, grazing, mat), 0, 1);
-  const angle = .15 + .45 * grazing / 40, hit = [450, 250];
-  const left = [105, hit[1] - 345 * Math.tan(angle)], right = [795, hit[1] - 345 * Math.tan(angle)];
-  surface(ctx, hit[1], mat);
-  line(ctx, [450, 80], [450, 338], C.muted, 1, .45, [5, 6]);
-  label(ctx, 'normal', 460, 94, C.muted, 11);
-  movingRay(ctx, left, hit, time, C.cyan);
-  movingRay(ctx, hit, right, time, C.amber, R, .1);
-  // A finite absorbing body is assumed: the non-reflected branch is illustrative.
-  movingRay(ctx, hit, [635, 344], time, C.violet, (1 - R) * .7, .4, 3);
-  label(ctx, 'incident photons', left[0], left[1] - 18, C.cyan);
-  label(ctx, `reflected · ${pct(R)}`, right[0], right[1] - 18, C.amber, 14, 'right');
-  label(ctx, 'into material', 650, 318, C.violet, 12);
-  ctx.save(); ctx.strokeStyle = C.amber; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(...hit, 72, -angle, 0); ctx.stroke(); ctx.restore();
-  label(ctx, `θ = ${grazing.toFixed(1)} mrad`, 530, 236, C.amber, 12);
-  dot(ctx, ...hit, C.ink, 4);
-  label(ctx, 'Grazing angle measured from the surface · angles exaggerated', 450, 385, C.muted, 12, 'center');
-}
-
 function penetration(ctx, s, time) {
   const e = s.photon ?? 5, thickness = s.thickness ?? 25, mat = s.material ?? 'Cu';
   const T = clamp(transmission(e, thickness, mat), 0, 1);
@@ -102,8 +81,8 @@ function penetration(ctx, s, time) {
   label(ctx, 'Illustrative attenuation model · positions not to scale', 805, 385, C.muted, 12, 'right');
 }
 
-function rough(ctx, s, time) {
-  const e = s.photon ?? 5, grazing = s.grazing ?? 5, sigma = s.roughness ?? .3, mat = s.material ?? 'Cu';
+function reflection(ctx, s, time) {
+  const e = s.photon ?? 5, grazing = s.grazing ?? 5, sigma = s.roughness ?? 0, mat = s.material ?? 'Cu';
   const smooth = clamp(reflectivity(e, grazing, mat), 0, 1);
   const coherent = clamp(specularFraction(e, grazing, sigma), 0, 1);
   const R = smooth * coherent;
@@ -115,26 +94,31 @@ function rough(ctx, s, time) {
   movingRay(ctx, hit, end, time, C.amber, R, .25);
   // The angular fan is qualitative, not a normalized redistribution of lost specular power.
   if (sigma > .005) {
-    const spread = .02 + Math.min(sigma / 3, 1) * .48;
+    const spread = Math.min(sigma / 3, 1) * .5;
+    const visibility = 1 - Math.exp(-((sigma / .6) ** 2));
     for (let i = 0; i < 15; i++) {
       const theta = Math.max(.025, angle + spread * (i / 14 * 2 - 1));
       const length = Math.min(365 / Math.cos(theta), 205 / Math.sin(theta));
       const b = [hit[0] + length * Math.cos(theta), hit[1] - length * Math.sin(theta)];
-      movingRay(ctx, hit, b, time * (1 + i * .013), C.violet, .06 + .13 * Math.min(sigma, 1), i * .13, 2);
+      movingRay(ctx, hit, b, time * (1 + i * .013), C.violet, .19 * visibility, i * .13, 2);
     }
   }
   dot(ctx, ...hit, C.ink, 3.5);
   label(ctx, 'incident', 105, a[1] - 17, C.cyan);
   label(ctx, `specular · ${pct(R)}`, 795, 66, C.amber, 14, 'right');
   label(ctx, `RMS height σ = ${sigma.toFixed(2)} nm`, 110, 302, C.ink, 14);
-  label(ctx, 'scattered directions', 590, 104, C.violet, 12);
+  if (sigma > .005) label(ctx, 'scattered directions', 590, 104, C.violet, 12);
+  // Continue the incident direction, clipped to the material; refraction is omitted.
+  const intoX = Math.min(795, hit[0] + (344 - hit[1]) / Math.tan(angle));
+  const into = [intoX, hit[1] + (intoX - hit[0]) * Math.tan(angle)];
+  movingRay(ctx, hit, into, time, C.muted, (1 - smooth) * .7, .4, 3);
   label(ctx, 'Qualitative scattering fan · diffuse intensity is not calculated', 450, 372, C.muted, 12, 'center');
   label(ctx, 'Surface height and angles exaggerated', 450, 392, C.muted, 11, 'center');
 }
 
 /** Draw material interactions in a 900×400 schematic coordinate system. */
 export function renderMaterial(ctx, w, h, id, state, time) {
-  const draw = { reflection, penetration, rough }[id];
+  const draw = { reflection, penetration }[id];
   if (!draw) return false;
   ctx.save();
   const scale = Math.min(w / 900, h / 400);

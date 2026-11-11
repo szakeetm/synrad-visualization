@@ -3,6 +3,15 @@ import assert from 'node:assert/strict';
 import {controlPosition,controlValue} from '../src/controls.js';
 
 const gamma={min:1,max:30,scale:'rapidity'};
+test('roughness slider gives finer control near a smooth surface',()=>{
+  const roughness={min:0,max:3,scale:'quadratic'};
+  assert.equal(controlValue(0,roughness),0);
+  assert.equal(controlValue(1000,roughness),3);
+  assert.ok(controlValue(100,roughness)<.05);
+  for(const position of [0,10,100,500,1000]){
+    assert.ok(Math.abs(controlPosition(controlValue(position,roughness),roughness)-position)<1e-9);
+  }
+});
 test('Lorentz slider resolves the near-rest region instead of jumping to gamma 1.5',()=>{
   assert.equal(controlValue(0,gamma),1);
   assert.equal(controlValue(1000,gamma),30);

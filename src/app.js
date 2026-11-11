@@ -24,7 +24,7 @@ experiments.forEach((e,i)=>{
 });
 
 function select(id) {
-  selected=experiments.find(e=>e.id===id)??experiments[0];
+  selected=experiments.find(e=>e.id===(id==='rough'?'reflection':id))??experiments[0];
   $('scene-card').hidden=selected.id==='spectrum';$('chart-reset').hidden=selected.id!=='spectrum';
   if('energy' in states[selected.id]){const c=selected.controls.find(c=>c.key==='energy');sharedEnergy=Math.max(c.min,Math.min(c.max,sharedEnergy));states[selected.id].energy=sharedEnergy;}
   document.querySelectorAll('[data-id]').forEach(a=>{const active=a.dataset.id===selected.id;a.classList.toggle('active',active);if(active)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
