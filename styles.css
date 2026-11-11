@@ -14,3 +14,29 @@ main{margin-left:238px;padding:0 42px;max-width:1740px}.topbar{height:44px;borde
 .chart-scale-controls{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}.axis-toggle{display:flex;align-items:center;gap:2px;font-size:9px;color:#7c9295}.axis-toggle>span{margin-right:6px}.axis-toggle button{font-size:9px;padding:5px 8px;border:1px solid #e1e9e5;background:#f8faf9;color:#8a9b9c;border-radius:4px}.axis-toggle button[aria-pressed=true]{background:#e5f2ec;color:#217d6b;border-color:#b9d8cb}#chart-scale-note{font-size:8px;color:#8b9c9f;line-height:1.5}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important}}
 .cavity-lobes{display:grid;grid-template-columns:1fr 1fr;gap:12px}.cavity-lobes figure{margin:0;border-radius:7px;background:#101d29;overflow:hidden;color:#e3edf0}.cavity-lobes h3{font-size:12px;font-weight:500;margin:16px 16px 0}.cavity-lobes p{font-size:10px;line-height:1.6;color:#9cb2bb;margin:0;padding:0 16px 16px}.cavity-lobes svg{overflow:hidden}.chart-scale-controls[hidden],.chart-legend[hidden]{display:none}@media(max-width:620px){.cavity-lobes{grid-template-columns:1fr}}
+
+/* Preserve readable plot text and let detailed diagrams expand on touch screens. */
+.scene-viewport{overflow-x:auto;overscroll-behavior-x:contain}
+#scene-zoom{display:none}
+#scene-pan-hint{margin:0;padding:10px 12px;font-size:11px;line-height:1.5}
+@media(min-width:901px){#scene-pan-hint{display:none}}
+@media(max-width:900px){
+  #scene-zoom{display:block}
+  .scene-viewport.enlarged canvas{width:900px;max-width:none}
+}
+@media(max-width:620px){
+  .scene-toolbar{height:auto;min-height:44px;flex-wrap:wrap;gap:0 10px;font-size:10px;letter-spacing:1px}
+  .scene-toolbar>div{gap:16px;flex-wrap:wrap}
+  .scene-button{min-height:44px;font-size:11px}
+  .icon-button{min-width:44px;min-height:44px}
+  .nav-item{min-height:44px;font-size:11px}
+  .card-heading{flex-wrap:wrap}
+  .control select{font-size:16px}
+  .control input[type=range]{height:28px;margin:6px 0 0}
+  .control-presets button{min-height:36px;font-size:11px}
+  .axis-toggle button{min-height:36px;padding:8px 10px;font-size:11px}
+  .chart-scale-controls{gap:10px}
+  .chart-reset,.page-footer button{min-height:44px}
+  .scene-legend,.chart-legend,.chart-caption{font-size:10px}
+  .page-footer button{flex-shrink:0}
+}

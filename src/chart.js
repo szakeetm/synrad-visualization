@@ -50,7 +50,8 @@ export function chartYFraction(value,range,logarithmic=false) {
 }
 
 export function drawChart(container,view) {
-  const w=760,h=250,m={l:62,r:20,t:25,b:48},pw=w-m.l-m.r,ph=h-m.t-m.b;
+  const markers=view.markers.filter(marker=>marker.x>=view.xRange[0]&&marker.x<=view.xRange[1]);
+  const w=Math.min(760,container.clientWidth||760),h=w<500?300:250,m={l:62,r:20,t:25+14*Math.max(0,markers.length-1),b:48},pw=w-m.l-m.r,ph=h-m.t-m.b;
   const svg=el('svg',{viewBox:`0 0 ${w} ${h}`,role:'img','aria-label':`${view.title}. X axis: ${view.xLabel} (${view.symlogX?'symmetric logarithmic':view.logX?'logarithmic':'linear'}). Y axis: ${view.yLabel} (${view.logY?'logarithmic':'linear'}).`});
   svg.append(el('title',{},view.title),el('desc',{},view.caption));
   const tx=x=>m.l+pw*axisFraction(x,view.xRange,view.logX,view.symlogX);
@@ -60,7 +61,12 @@ export function drawChart(container,view) {
     svg.append(el('line',{x1:m.l,y1:ty(y),x2:w-m.r,y2:ty(y),stroke:'#e7eeeb','stroke-width':1}));
     svg.append(el('text',{x:m.l-11,y:ty(y)+3,'text-anchor':'end',fill:'#94a5a8','font-size':10},nice(y)));
   }
-  const ticks=axisTicks(view.xRange,view.logX,view.symlogX);
+  // Keep labels at their native font size and omit crowded ticks on narrow plots.
+  const candidates=axisTicks(view.xRange,view.logX,view.symlogX);
+  const ticks=[];
+  for(const x of [...candidates].sort((a,b)=>(a===0?-1:b===0?1:a-b))) {
+    if(ticks.every(t=>Math.abs(tx(t)-tx(x))>=48))ticks.push(x);
+  }
   for(const x of ticks) {
     svg.append(el('line',{x1:tx(x),x2:tx(x),y1:m.t,y2:h-m.b,stroke:'#edf1ef','stroke-width':1,'stroke-dasharray':'2 4'}));
     svg.append(el('text',{x:tx(x),y:h-m.b+18,'text-anchor':'middle',fill:'#94a5a8','font-size':10},nice(x)));
@@ -73,9 +79,9 @@ export function drawChart(container,view) {
     if(i===0&&!view.logY)data.append(el('path',{d:`${path} L${tx(tr.points.at(-1)[0])},${ty(0)} L${tx(tr.points[0][0])},${ty(0)} Z`,fill:'url(#plot-fill)'}));
     data.append(el('path',{d:path,fill:'none',stroke:tr.color,'stroke-width':i===0?2.3:1.7,'stroke-linejoin':'round',...(tr.dashed?{'stroke-dasharray':'5 5'}:{})}));
   });svg.append(data);
-  for(const marker of view.markers)if(marker.x>=view.xRange[0]&&marker.x<=view.xRange[1]) {
+  for(const [index,marker] of markers.entries()) {
     const x=tx(marker.x);svg.append(el('line',{x1:x,x2:x,y1:m.t,y2:h-m.b,stroke:marker.color,'stroke-width':1,'stroke-dasharray':'4 4'}));
-    const right=x>w-140;svg.append(el('text',{x:x+(right?-5:5),y:14,'text-anchor':right?'end':'start',fill:marker.color,'font-size':10},marker.label));
+    const right=x>w-140;svg.append(el('text',{x:x+(right?-5:5),y:14+14*index,'text-anchor':right?'end':'start',fill:marker.color,'font-size':10},marker.label));
   }
   svg.append(el('text',{x:m.l+pw/2,y:h-6,'text-anchor':'middle',fill:'#81969a','font-size':10},view.xLabel));
   svg.append(el('text',{transform:`translate(12 ${m.t+ph/2}) rotate(-90)`,'text-anchor':'middle',fill:'#81969a','font-size':10},view.yLabel));
