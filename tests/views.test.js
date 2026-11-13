@@ -20,9 +20,9 @@ test('merged reflection page calculates smooth and rough material reflection wit
   }
 });
 
-test('cavity defaults show the 45.6 GeV microradian cone and downstream transport',()=>{
+test('cavity at 45.6 GeV shows the microradian cone and downstream transport',()=>{
   const e=experiments.find(e=>e.id==='cavity'),s=Object.fromEntries(e.controls.map(c=>[c.key,c.default]));
-  const v=getView('cavity',s);
+  const v=getView('cavity',{...s,cavityEnergy:45.6});
   assert.match(v.xLabel,/µrad/);
   const peak=v.traces[0].points.reduce((a,b)=>a[1]>b[1]?a:b);
   assert.ok(Math.abs(peak[0])>5.5&&Math.abs(peak[0])<5.7);

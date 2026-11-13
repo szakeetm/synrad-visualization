@@ -64,11 +64,11 @@ test('zero acceleration emits no packets and has no interception fractions',()=>
   assert.equal(m.packets.length,0);assert.equal(m.fractions,null);
   near(m.state(m.entryTime).beta,m.state(m.exitTime).beta);
 });
-test('the default 45.6 GeV beam has a micron-scale cone and clears the cavity',()=>{
+test('the 45.6 GeV beam has a micron-scale cone and clears the cavity',()=>{
   const exp=experiments.find(e=>e.id==='cavity');
   const s=Object.fromEntries(exp.controls.map(c=>[c.key,c.default]));
-  assert.equal(s.cavityEnergy,45.6);
-  const m=createCavityModel(s);
+  assert.equal(s.cavityEnergy,.01);
+  const m=createCavityModel({...s,cavityEnergy:45.6});
   assert.ok(m.gammaIn>89000&&m.gammaIn<90000);
   const spread=Math.tan(cavityPeak(m.gammaIn))*1e6;
   assert.ok(spread>5.5&&spread<5.7);
