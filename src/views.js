@@ -23,10 +23,13 @@ export function getView(id, state) {
       return run.bins[component][i];
     });
   }
-  const sliceHits = bins.total.reduce((sum, count) => sum + count, 0);
+  const sliceCounts = Object.fromEntries(Object.entries(bins).map(([component, values]) => [component, values.reduce((sum, count) => sum + count, 0)]));
+  const sliceHits = sliceCounts.total;
   const channelShare = count => run.n ? `${fmt(100 * count / run.n, 1)}%` : '—';
   const makeTrace = (component, name, color, dashed = false) => ({
     name, color, dashed,
+    drawOrder: {total: 0, sigma: 1, pi: 2}[component],
+    strokeWidth: component === 'total' ? 4 : 2.3,
     points: bins[component].flatMap((count, i) => [
       [range[0] + i * width, count],
       [range[0] + (i + 1) * width, count],
@@ -47,16 +50,17 @@ export function getView(id, state) {
     metrics: [
       {name: 'Photons sampled', value: `${run.n.toLocaleString('en-US')} / ${run.target.toLocaleString('en-US')}`},
       {name: angular ? 'Hits in zero-angle slice' : 'Detector hits', value: sliceHits.toLocaleString('en-US')},
-      {name: 'Sampled σ share', value: channelShare(run.counts.sigma)},
-      {name: 'Sampled π share', value: channelShare(run.counts.pi)},
+      angular ? {name: 'Slice σ hits', value: sliceCounts.sigma.toLocaleString('en-US')} : {name: 'Sampled σ share', value: channelShare(run.counts.sigma)},
+      angular ? {name: 'Slice π hits', value: sliceCounts.pi.toLocaleString('en-US')} : {name: 'Sampled π share', value: channelShare(run.counts.pi)},
     ],
     badge: run.n === run.target ? 'RUN COMPLETE' : 'SAMPLING PHOTONS',
+    plotNote: angular ? 'π = 0 at γθx = 0 · σ = sum' : '',
     caption: angular
-      ? 'Raw counts from the central pixel column of the σ, π and sum heatmaps at γθx = 0. Each histogram bin is one map pixel. Counts update as photons arrive.'
+      ? 'Raw counts from the central pixel column of the σ, π and sum heatmaps at γθx = 0. Each histogram bin is one map pixel. Here π = 0 and σ equals the sum. A linear Y axis displays the zero baseline. Counts update as photons arrive.'
       : 'Raw counts from the σ and π detector arrivals in this energy-resolved run. The sum adds the two channels in each bin. Counts update as photons arrive.',
     legend: [['σ analyzer channel', '#55d9d0'], ['π analyzer channel', '#f5bc70']],
     note: angular
-      ? `The zero-angle slice spans one map pixel in x, with width ${fmt(2 * polarizationRange / polarizationGridSize, 4)} in γθx. Shares use all sampled hits across the XY window. Reset and parameter changes clear the sampled maps and plot.`
+      ? `The zero-angle slice spans one map pixel in x, with width ${fmt(2 * polarizationRange / polarizationGridSize, 4)} in γθx. The local angular model has Iπ ∝ (γθx)²(γθy)², so π vanishes at γθx = 0. The XY maps include π hits away from this slice. Reset and parameter changes clear the sampled maps and plot.`
       : 'Each plotted count comes from a photon already drawn in the detector scene. Reset and parameter changes clear the sampled arrivals and plot.',
   };
 }

@@ -46,3 +46,35 @@ test('spectral plot counts only photon arrivals already drawn by the scene', () 
     assert.equal(run.n, 1000 * time / 5);
   }
 });
+
+test('zero-angle plot identifies the absent pi channel and keeps sigma visible over the sum', async () => {
+  const {drawChart, prepareChartScales} = await import('../src/chart.js');
+  const state = {polarizationModel: 'angular', photons: 100000};
+  const run = getPhotonSimulation('polarization', state);
+  advanceMonteCarlo(run, 5, batch => recordPolarizationHits(run, batch));
+  const view = getView('polarization', state);
+  assert.match(view.plotNote, /π = 0/);
+  assert.match(view.plotNote, /σ = sum/);
+  assert.equal(view.metrics.find(m => m.name === 'Slice π hits').value, '0');
+  assert.deepEqual(counts(view.traces[0]), counts(view.traces[2]));
+  const previousDocument = globalThis.document;
+  const elements = [];
+  globalThis.document = {
+    createElementNS(_, tag) {
+      const element = {tag, attrs: {}, children: [], setAttribute(key, value) { this.attrs[key] = value; }, append(...children) { this.children.push(...children); }};
+      elements.push(element);
+      return element;
+    },
+  };
+  try {
+    drawChart({clientWidth: 760, replaceChildren() {}}, prepareChartScales(view, {y: 'log'}));
+    const paths = elements.filter(e => e.tag === 'path' && e.attrs.stroke);
+    assert.equal(paths[0].attrs.stroke, view.traces[2].color);
+    assert.equal(paths[1].attrs.stroke, view.traces[0].color);
+    assert.ok(paths[0].attrs['stroke-width'] > paths[1].attrs['stroke-width']);
+    assert.ok(elements.some(e => e.tag === 'text' && e.textContent === view.plotNote));
+  } finally {
+    if (previousDocument === undefined) delete globalThis.document;
+    else globalThis.document = previousDocument;
+  }
+});

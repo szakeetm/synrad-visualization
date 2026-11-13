@@ -55,6 +55,7 @@ export function drawChart(container,view) {
   const w=Math.min(760,container.clientWidth||760),h=w<500?300:250,m={l:62,r:20,t:25+14*Math.max(0,markers.length-1),b:48},pw=w-m.l-m.r,ph=h-m.t-m.b;
   const svg=el('svg',{viewBox:`0 0 ${w} ${h}`,role:'img','aria-label':`${view.title}. X axis: ${view.xLabel} (${view.symlogX?'symmetric logarithmic':view.logX?'logarithmic':'linear'}). Y axis: ${view.yLabel} (${view.logY?'logarithmic':'linear'}).`});
   svg.append(el('title',{},view.title),el('desc',{},view.caption));
+  if(view.plotNote)svg.append(el('text',{x:w-m.r,y:14,'text-anchor':'end',fill:'#637b83','font-size':10},view.plotNote));
   const tx=x=>m.l+pw*axisFraction(x,view.xRange,view.logX,view.symlogX);
   const ty=y=>m.t+ph*(1-chartYFraction(y,view.yRange,view.logY));
   const yTicks=axisTicks(view.yRange,view.logY);
@@ -75,11 +76,12 @@ export function drawChart(container,view) {
   const defs=el('defs'),clip=el('clipPath',{id:'plot-clip'});clip.append(el('rect',{x:m.l,y:m.t,width:pw,height:ph+1}));defs.append(clip);
   const gradient=el('linearGradient',{id:'plot-fill',x1:'0',y1:'0',x2:'0',y2:'1'});gradient.append(el('stop',{offset:'0%','stop-color':'#208f86','stop-opacity':'.15'}),el('stop',{offset:'100%','stop-color':'#208f86','stop-opacity':'.01'}));defs.append(gradient);svg.append(defs);
   const data=el('g',{'clip-path':'url(#plot-clip)'});
-  view.traces.forEach((tr,i)=>{
+  const orderedTraces=view.traces.map((trace,index)=>({trace,index})).sort((a,b)=>(a.trace.drawOrder??a.index)-(b.trace.drawOrder??b.index));
+  orderedTraces.forEach(({trace:tr,index:i})=>{
     if(!tr.points.length)return;
     const path=tr.points.map(([x,y],j)=>`${j?'L':'M'}${tx(x).toFixed(2)},${ty(y).toFixed(2)}`).join(' ');
     if(i===0&&!view.logY)data.append(el('path',{d:`${path} L${tx(tr.points.at(-1)[0])},${ty(0)} L${tx(tr.points[0][0])},${ty(0)} Z`,fill:'url(#plot-fill)'}));
-    data.append(el('path',{d:path,fill:'none',stroke:tr.color,'stroke-width':i===0?2.3:1.7,'stroke-linejoin':'round',...(tr.dashed?{'stroke-dasharray':'5 5'}:{})}));
+    data.append(el('path',{d:path,fill:'none',stroke:tr.color,'stroke-width':tr.strokeWidth??(i===0?2.3:1.7),'stroke-linejoin':'round',...(tr.dashed?{'stroke-dasharray':'5 5'}:{})}));
   });svg.append(data);
   for(const [index,marker] of markers.entries()) {
     const x=tx(marker.x);svg.append(el('line',{x1:x,x2:x,y1:m.t,y2:h-m.b,stroke:marker.color,'stroke-width':1,'stroke-dasharray':'4 4'}));
