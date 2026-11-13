@@ -1,3 +1,4 @@
+import {renderMonteCarlo} from './monte-carlo-scene.js';
 import {experiments} from './experiments.js';
 import {getView,fmt} from './views.js';
 import {drawChart,prepareChartScales} from './chart.js';
@@ -40,22 +41,28 @@ function select(id) {
     const box=document.createElement('div');box.className='control';box.dataset.controlKey=c.key;
     const label=document.createElement('label');label.htmlFor=`control-${c.key}`;label.textContent=c.label;
     let input;
-    if(c.options){input=document.createElement('select');for(const o of c.options){const option=document.createElement('option');option.value=o.value;option.textContent=o.label;input.append(option);}}
+    if(c.type==='checkbox'){input=document.createElement('input');input.type='checkbox';input.checked=states[selected.id][c.key];box.classList.add('checkbox-control');}
+    else if(c.options){input=document.createElement('select');for(const o of c.options){const option=document.createElement('option');option.value=o.value;option.textContent=o.label;input.append(option);}}
     else {const output=document.createElement('output');output.id=`value-${c.key}`;output.htmlFor=`control-${c.key}`;label.append(output);input=document.createElement('input');input.type='range';input.min=c.scale?0:c.min;input.max=c.scale?1000:c.max;input.step=c.scale?1:c.step;}
     input.id=`control-${c.key}`;input.value=c.options?states[selected.id][c.key]:controlPosition(states[selected.id][c.key],c);box.append(label,input);
-    if(!c.options){const limits=document.createElement('div');limits.className='range-limits';limits.innerHTML=`<span>${c.min} ${c.unit}</span><span>${c.max} ${c.unit}</span>`;box.append(limits);}
+    if(!c.options&&c.type!=='checkbox'){const limits=document.createElement('div');limits.className='range-limits';limits.innerHTML=`<span>${c.min} ${c.unit}</span><span>${c.max} ${c.unit}</span>`;box.append(limits);}
     if(c.scale==='rapidity'){const hint=document.createElement('p');hint.className='control-hint';hint.textContent='Fine control near γ = 1';box.append(hint);}
-    if(c.scale==='log'){const hint=document.createElement('p');hint.className='control-hint';hint.textContent='Logarithmic energy slider · presets include 45.6 GeV';box.append(hint);}
-    if(c.presets){const presets=document.createElement('div');presets.className='control-presets';presets.setAttribute('aria-label',`${c.label} presets`);for(const value of c.presets){const button=document.createElement('button');button.type='button';button.textContent=String(value);button.setAttribute('aria-label',`Set ${c.label.toLowerCase()} to ${value} ${c.unit}`);button.addEventListener('click',()=>{states[selected.id][c.key]=value;input.value=controlPosition(value,c);if(c.key==='energy')sharedEnergy=value;update();});presets.append(button);}box.append(presets);}
-    input.addEventListener('input',()=>{const value=c.options?input.value:controlValue(Number(input.value),c);states[selected.id][c.key]=value;if(c.key==='energy')sharedEnergy=value;update();});controls.append(box);
+    if(c.scale==='log'){const hint=document.createElement('p');hint.className='control-hint';hint.textContent=c.hint??'Logarithmic energy slider · presets include 45.6 GeV';box.append(hint);}
+    if(c.presets){const presets=document.createElement('div');presets.className='control-presets';presets.setAttribute('aria-label',`${c.label} presets`);for(const value of c.presets){const button=document.createElement('button');button.type='button';button.textContent=c.integer?value.toLocaleString('en-US'):String(value);button.setAttribute('aria-label',`Set ${c.label.toLowerCase()} to ${value} ${c.unit}`);button.addEventListener('click',()=>{states[selected.id][c.key]=value;input.value=controlPosition(value,c);if(c.key==='energy')sharedEnergy=value;update();});presets.append(button);}box.append(presets);}
+    input.addEventListener('input',()=>{const value=c.type==='checkbox'?input.checked:c.options?input.value:controlValue(Number(input.value),c);states[selected.id][c.key]=value;if(c.key==='energy')sharedEnergy=value;update();});controls.append(box);
   }
-  time=0;update();
+  if(selected.id==='monte-carlo'){
+    const button=document.createElement('button');button.type='button';button.className='sample-button';button.textContent='New sample';
+    button.addEventListener('click',()=>{const state=states[selected.id];state.sampleSeed=(state.sampleSeed??41)+1;time=0;update();});
+    controls.append(button);
+  }
+  time=0;setPaused(paused);update();
 }
 function legend(container,items){container.replaceChildren();for(const [label,color]of items){const span=document.createElement('span');span.className='legend-key';const i=document.createElement('i');i.style.setProperty('--key',color);span.append(i,document.createTextNode(label));container.append(span);}}
 function update() {
   const state=states[selected.id];
   for(const c of selected.controls){const box=$(`control-${c.key}`).closest('.control');box.hidden=!!c.showWhen&&state[c.showWhen.key]!==c.showWhen.value;}
-  for(const c of selected.controls)if(!c.options){const value=state[c.key];const decimals=String(c.step).split('.')[1]?.length??0;set(`value-${c.key}`,`${fmt(value,decimals)} ${c.unit}`.trim());const input=$(`control-${c.key}`);input.setAttribute('aria-valuetext',`${fmt(value,decimals)} ${c.unit}`);if(c.scale){input.setAttribute('aria-valuemin',c.min);input.setAttribute('aria-valuemax',c.max);input.setAttribute('aria-valuenow',value);}}
+  for(const c of selected.controls)if(!c.options&&c.type!=='checkbox'){const value=state[c.key];const decimals=String(c.step).split('.')[1]?.length??0;set(`value-${c.key}`,`${fmt(value,decimals)} ${c.unit}`.trim());const input=$(`control-${c.key}`);input.setAttribute('aria-valuetext',`${fmt(value,decimals)} ${c.unit}`);if(c.scale){input.setAttribute('aria-valuemin',c.min);input.setAttribute('aria-valuemax',c.max);input.setAttribute('aria-valuenow',value);}}
   const sourceView=getView(selected.id,state),view=prepareChartScales(sourceView,plotScales[selected.id]);
   const lobes=selected.id==='cavity';
   document.querySelector('.chart-scale-controls').hidden=lobes;
@@ -69,8 +76,8 @@ function update() {
   $('metrics').replaceChildren(...view.metrics.map(m=>{const div=document.createElement('div');div.className='metric';const name=document.createElement('span');name.className='metric-name';name.textContent=m.name;const value=document.createElement('span');value.className='metric-value';value.textContent=m.value;div.append(name,value);return div;}));
   draw();
 }
-function draw(){if(selected.id==='spectrum')return;ctx.clearRect(0,0,900,400);ctx.fillStyle='#101d29';ctx.fillRect(0,0,900,400);ctx.strokeStyle='#7a9eab0b';ctx.lineWidth=1;for(let x=0;x<900;x+=30){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,400);ctx.stroke();}for(let y=0;y<400;y+=30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(900,y);ctx.stroke();}renderCavity(ctx,900,400,selected.id,states[selected.id],time)||renderPolarization(ctx,900,400,selected.id,states[selected.id],time)||renderMagnet(ctx,900,400,selected.id,states[selected.id],time)||renderSource(ctx,900,400,selected.id,states[selected.id],time)||renderMaterial(ctx,900,400,selected.id,states[selected.id],time);}
-function setPaused(value){paused=value;$('pause').textContent=paused?'▶ Play':'Ⅱ Pause';$('pause').setAttribute('aria-pressed',String(paused));set('scene-label',paused?'EXPERIMENT PAUSED':'LIVE EXPERIMENT');}
+function draw(){if(selected.id==='spectrum')return;ctx.clearRect(0,0,900,400);ctx.fillStyle='#101d29';ctx.fillRect(0,0,900,400);ctx.strokeStyle='#7a9eab0b';ctx.lineWidth=1;for(let x=0;x<900;x+=30){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,400);ctx.stroke();}for(let y=0;y<400;y+=30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(900,y);ctx.stroke();}renderMonteCarlo(ctx,900,400,selected.id,states[selected.id],time)||renderCavity(ctx,900,400,selected.id,states[selected.id],time)||renderPolarization(ctx,900,400,selected.id,states[selected.id],time)||renderMagnet(ctx,900,400,selected.id,states[selected.id],time)||renderSource(ctx,900,400,selected.id,states[selected.id],time)||renderMaterial(ctx,900,400,selected.id,states[selected.id],time);}
+function setPaused(value){paused=value;$('pause').textContent=paused?'▶ Play':'Ⅱ Pause';$('pause').setAttribute('aria-pressed',String(paused));set('scene-label',paused?'EXPERIMENT PAUSED':selected.id==='monte-carlo'?'SAMPLED PATH REPLAY':'LIVE EXPERIMENT');}
 $('pause').addEventListener('click',()=>setPaused(!paused));
 $('scene-zoom').addEventListener('click',()=>{
   const enlarged=$('scene-viewport').classList.toggle('enlarged');

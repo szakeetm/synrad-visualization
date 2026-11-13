@@ -38,6 +38,7 @@ The numerical tests check critical-energy scaling, the universal spectrum, direc
 | Quadrupole | Electron energy, field gradient, round-beam size, offset, length | 26–27 |
 | Insertion devices | Electron energy, K, magnetic period, number of periods | 5, 28–29 |
 | Cavity radiation | Electron energy (default 45.6 GeV), cavity gain in MeV, aperture radius, packet escape and wall interception | Extension of 13 |
+| Monte Carlo | 10 to 1,000,000 test photons, reflection/scattering checkboxes, independent samples and absorption convergence | Extension of 20–23 |
 
 ## Physics and limits
 
@@ -53,6 +54,7 @@ This is a teaching tool. Scene geometry, travel times and visible ray counts are
 - **Reflection:** approximate free-electron optical constants and Fresnel reflection. This model does **not** use the Henke tables. Absorption edges, coatings, oxide layers and chemical state are omitted; material values are illustrative.
 - **Penetration:** Beer–Lambert transmission, `T = exp(−μt)`, with an illustrative photoelectric energy power law for μ. This is **not** NIST attenuation data. Normal incidence and the uncollided primary beam are assumed; scattering, secondary photons and surface reflection are omitted.
 - **Roughness:** coherent specular suppression `exp[−(4πσ sin θ / λ)²]`. Scattered ray directions are qualitative. Lost specular intensity does not all become diffuse reflection; the model does not calculate a measured BSDF or surface correlation function.
+- **Monte Carlo:** an equal-weight, single-surface photon-transport model with illustrative probabilities of 30% specular reflection, 20% diffuse scattering and 50% absorption. Disabling a channel transfers its probability to absorption. Increasing the photon count extends a seeded random sequence. The scene replays the first 40 paths at most, while totals and the convergence plot use the entire sample. The absorption estimate is compared with the exact model probability and an approximate pointwise 95% sampling range, with standard error `√[A(1−A)/N]`. New sample changes the random seed. Geometry and probabilities are schematic.
 - **Insertion devices:** the planar-undulator resonance equation, odd-harmonic Bessel-J coupling factors and finite-period interference illustrate harmonics. The high-K broad envelope is a qualitative wiggler transition. A large K does not eliminate harmonics in a perfectly resolved single-electron on-axis spectrum; angular integration and finite beam properties matter.
 
 ## Sources

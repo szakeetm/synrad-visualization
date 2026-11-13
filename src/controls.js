@@ -11,7 +11,8 @@ export function controlValue(position,control){
   if(control.scale==='quadratic')return control.min+(control.max-control.min)*(Math.max(0,Math.min(1000,position))/1000)**2;
   if(control.scale==='log'){
     if(position<=0)return control.min;if(position>=1000)return control.max;
-    return control.min*(control.max/control.min)**(position/1000);
+    const value=control.min*(control.max/control.min)**(position/1000);
+    return control.integer?Math.round(value):value;
   }
   if(control.scale!=='rapidity')return position;
   if(position<=0)return control.min;

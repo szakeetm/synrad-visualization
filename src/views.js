@@ -1,3 +1,4 @@
+import {simulateMonteCarlo} from './monte-carlo.js';
 import {gamma, criticalEnergy, spectrum, vertical, aberrate, reflectivity, criticalAngle, attenuation, transmission, specularFraction, undulatorEnergy, sinc, harmonicCoupling, dipoleProperties, quadrupoleProperties, quadrupoleSourceDensity, angularPolarization, photonFluxPerBandwidth, powerPerBandwidth, transverseRadiation} from './physics.js';
 import {createCavityModel,cavityPattern,cavityPeak} from './cavity-physics.js';
 
@@ -13,6 +14,28 @@ function erf(x) {const sign=Math.sign(x);x=Math.abs(x);const t=1/(1+.3275911*x);
 
 export function getView(id,s) {
   const E=s.energy??3, g=gamma(E), ec=criticalEnergy(E,s.rho??10);
+  if(id==='monte-carlo'){
+    const model=simulateMonteCarlo(s),a=model.expected.absorbed;
+    const last=model.history.at(-1);
+    return base('Convergence of the absorbed fraction','Test photons · N',[1,Math.max(10,model.n)],[
+      metric('Simulated photons',model.n.toLocaleString('en-US')),
+      ...Object.entries(model.counts).map(([name,count])=>metric(name[0].toUpperCase()+name.slice(1),`${count.toLocaleString('en-US')} · ${percent(count/model.n)}`)),
+      metric('Expected absorption',percent(a)),
+      metric('Error from solution',`${fmt(Math.abs(last.absorbed-a)*100,3)} pp`),
+      metric('Expected standard error',`${fmt(100*Math.sqrt(a*(1-a)/model.n),3)} pp`),
+    ],{
+      logX:true,yRange:[0,1.05],yLabel:'Absorbed fraction',badge:'EQUAL-WEIGHT PHOTONS',
+      traces:[
+        trace('Monte Carlo estimate',colors.cyan,model.history.map(p=>[p.n,p.absorbed])),
+        trace('Expected solution',colors.amber,[[1,a],[model.n,a]],true),
+        trace('Approx. 95% sampling range',colors.grey,model.history.map(p=>[p.n,Math.min(1,a+p.uncertainty)]),true),
+        trace('Lower sampling range',colors.grey,model.history.map(p=>[p.n,Math.max(0,a-p.uncertainty)]),true),
+      ],
+      caption:'The running estimate uses every simulated photon. The expected solution and approximate pointwise sampling range use the enabled interaction probabilities. A 100× larger sample reduces the expected standard error by 10×. Error fluctuates along each run.',
+      legend:[['Incident','#55d9d0'],['Absorbed','#f17e80'],['Reflected','#f5bc70'],['Scattered','#b5a0ff']],
+      note:`Illustrative single-surface model. P(absorb) = 1 − P(reflect) − P(scatter) = ${fmt(a,2)}. The scene shows the first ${model.paths.length} photons of ${model.n.toLocaleString('en-US')}. Each test photon has equal statistical weight. pp = percentage points.`,
+    });
+  }
   if(id==='cavity'){
     const m=createCavityModel(s),limit=Math.min(Math.PI,cavityPeak(m.gammaIn)*4)*1e6,active=m.fractions!==null;
     const fraction=key=>m.fractions?`≈ ${percent(m.fractions[key])}`:'—';

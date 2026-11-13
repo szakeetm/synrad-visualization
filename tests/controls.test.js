@@ -39,3 +39,12 @@ test('energy slider resolves MeV comparisons and returns exact GeV presets',()=>
   }
   assert.ok(controlValue(500,c)>.3&&controlValue(500,c)<.31);
 });
+
+test('logarithmic photon counts stay integer and preserve presets',()=>{
+  const count={min:10,max:1000000,scale:'log',integer:true};
+  for(let position=0;position<=1000;position++){
+    const value=controlValue(position,count);
+    assert.ok(Number.isInteger(value)&&value>=10&&value<=1000000);
+  }
+  for(const value of [10,100,1000,10000,100000,1000000])assert.equal(controlValue(controlPosition(value,count),count),value);
+});

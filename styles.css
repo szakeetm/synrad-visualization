@@ -44,3 +44,9 @@ main{margin-left:238px;padding:0 42px;max-width:1740px}.topbar{height:44px;borde
   .scene-legend,.chart-legend,.chart-caption{font-size:10px}
   .page-footer button{flex-shrink:0}
 }
+.checkbox-control{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.checkbox-control label{cursor:pointer;line-height:1.6}
+.checkbox-control input[type=checkbox]{width:20px;height:20px;accent-color:#188d7f;cursor:pointer;flex-shrink:0}
+.sample-button{margin-top:22px;padding:9px 13px;border:1px solid #b9d8cb;border-radius:5px;background:#e5f2ec;color:#217d6b;font-size:11px;min-height:36px}
+.sample-button:hover{background:#d3eade}
+.control[data-control-key=photons] .control-presets button{flex:1 0 60px}

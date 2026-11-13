@@ -8,5 +8,6 @@ test('browser rendering modules load without syntax or import errors', async () 
     import('../src/polarization-scenes.js'),
     import('../src/cavity-scene.js'),
     import('../src/cavity-lobes.js'),
+    import('../src/monte-carlo-scene.js'),
   ]);
 });

@@ -139,4 +139,18 @@ export const experiments = [
       { key: 'gainMeV', label: 'Cavity energy gain', min: 0, max: 100, step: 1, unit: 'MeV', default: 20 },
       { key: 'aperture', label: 'Beam-pipe aperture radius', min: 5, max: 100, step: 1, unit: 'mm', default: 25 }],
   },
+  {
+    id: 'monte-carlo', title: 'Monte Carlo photon transport', short: 'Monte Carlo', group: 'Simulation',
+    kicker: '12 / From random photons to a solution',
+    description: 'Follow a few synchrotron test photons at a wall, then increase the sample to see a stable absorption estimate emerge.',
+    notice: 'Start with 10 photons, then try 100, 10,000 and 1,000,000. Watch the estimate settle and the sampling range narrow. New sample repeats the experiment with fresh random numbers.',
+    equation: 'Â = Nabsorbed / N;  σ(Â) = √[A(1 − A) / N]',
+    explanation: 'Each equal-weight test photon meets one surface. Draw a uniform random number u between 0 and 1. With both channels enabled, u < 0.30 gives specular reflection, 0.30 ≤ u < 0.50 gives diffuse scattering, and the remaining photons absorb. Reflected and scattered photons leave through the open region above the wall. Turning off a channel transfers its probability to absorption. These fixed probabilities and schematic directions illustrate Monte Carlo transport of synchrotron photons. A material calculation would sample photon energy and emission direction and use energy- and angle-dependent surface data. The plot estimates the fraction absorbed at this first encounter. Increasing N extends the same random sequence. Independent samples fluctuate, with typical error decreasing as 1/√N. The dashed solution follows directly from the enabled probabilities. The two sampling-range curves show A ± 1.96σ, clipped to [0, 1], using the known model probability A. They give an approximate 95% range at each N for large samples. Individual estimates can move away from the solution as N increases.',
+    slides: '20–23 · MONTE CARLO EXTENSION',
+    controls: [
+      { key: 'photons', label: 'Test photons', min: 10, max: 1000000, step: 1, scale: 'log', integer: true, hint: 'Logarithmic count slider · each increase extends the same sample', presets: [10, 100, 1000, 10000, 100000, 1000000], unit: '', default: 10 },
+      { key: 'reflection', label: 'Reflection · probability 30%', type: 'checkbox', default: true },
+      { key: 'scattering', label: 'Scattering · probability 20%', type: 'checkbox', default: true },
+    ],
+  },
 ];
