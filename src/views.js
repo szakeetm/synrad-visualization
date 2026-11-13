@@ -1,4 +1,4 @@
-import {simulateMonteCarlo} from './monte-carlo.js';
+import {getMonteCarloRun} from './monte-carlo.js';
 import {gamma, criticalEnergy, spectrum, vertical, aberrate, reflectivity, criticalAngle, attenuation, transmission, specularFraction, undulatorEnergy, sinc, harmonicCoupling, dipoleProperties, quadrupoleProperties, quadrupoleSourceDensity, angularPolarization, photonFluxPerBandwidth, powerPerBandwidth, transverseRadiation} from './physics.js';
 import {createCavityModel,cavityPattern,cavityPeak} from './cavity-physics.js';
 
@@ -15,25 +15,28 @@ function erf(x) {const sign=Math.sign(x);x=Math.abs(x);const t=1/(1+.3275911*x);
 export function getView(id,s) {
   const E=s.energy??3, g=gamma(E), ec=criticalEnergy(E,s.rho??10);
   if(id==='monte-carlo'){
-    const model=simulateMonteCarlo(s),a=model.expected.absorbed;
-    const last=model.history.at(-1);
-    return base('Convergence of the absorbed fraction','Test photons · N',[1,Math.max(10,model.n)],[
-      metric('Simulated photons',model.n.toLocaleString('en-US')),
-      ...Object.entries(model.counts).map(([name,count])=>metric(name[0].toUpperCase()+name.slice(1),`${count.toLocaleString('en-US')} · ${percent(count/model.n)}`)),
+    const model=getMonteCarloRun(s),a=model.expected.absorbed;
+    const estimate=model.n?model.counts.absorbed/model.n:0;
+    const history=[...model.history];
+    if(model.n&&history.at(-1)?.[0]!==model.n)history.push([model.n,estimate]);
+    const uncertainty=n=>1.96*Math.sqrt(a*(1-a)/n);
+    return base('Convergence of the absorbed fraction','Photons traced · N',[1,model.target],[
+      metric('Photons traced',`${model.n.toLocaleString('en-US')} / ${model.target.toLocaleString('en-US')}`),
+      ...Object.entries(model.counts).map(([name,count])=>metric(name[0].toUpperCase()+name.slice(1),`${count.toLocaleString('en-US')} · ${model.n?percent(count/model.n):'—'}`)),
       metric('Expected absorption',percent(a)),
-      metric('Error from solution',`${fmt(Math.abs(last.absorbed-a)*100,3)} pp`),
-      metric('Expected standard error',`${fmt(100*Math.sqrt(a*(1-a)/model.n),3)} pp`),
+      metric('Error from solution',model.n?`${fmt(Math.abs(estimate-a)*100,3)} pp`:'—'),
+      metric('Expected standard error',model.n?`${fmt(100*Math.sqrt(a*(1-a)/model.n),3)} pp`:'—'),
     ],{
-      logX:true,yRange:[0,1.05],yLabel:'Absorbed fraction',badge:'EQUAL-WEIGHT PHOTONS',
+      logX:true,yRange:[0,1.05],yLabel:'Absorbed fraction',badge:model.n===model.target?'RUN COMPLETE':'TRACING PHOTONS',
       traces:[
-        trace('Monte Carlo estimate',colors.cyan,model.history.map(p=>[p.n,p.absorbed])),
-        trace('Expected solution',colors.amber,[[1,a],[model.n,a]],true),
-        trace('Approx. 95% sampling range',colors.grey,model.history.map(p=>[p.n,Math.min(1,a+p.uncertainty)]),true),
-        trace('Lower sampling range',colors.grey,model.history.map(p=>[p.n,Math.max(0,a-p.uncertainty)]),true),
+        trace('Traced photon estimate',colors.cyan,history),
+        trace('Expected solution',colors.amber,[[1,a],[model.target,a]],true),
+        trace('Approx. 95% sampling range',colors.grey,history.map(([n])=>[n,Math.min(1,a+uncertainty(n))]),true),
+        trace('Lower sampling range',colors.grey,history.map(([n])=>[n,Math.max(0,a-uncertainty(n))]),true),
       ],
-      caption:'The running estimate uses every simulated photon. The expected solution and approximate pointwise sampling range use the enabled interaction probabilities. A 100× larger sample reduces the expected standard error by 10×. Error fluctuates along each run.',
+      caption:'The estimate and totals advance only after photon trajectories are drawn above. Every selected photon is traced once over the selected simulation duration. The dashed solution uses the enabled interaction probabilities. Enable reflection or scattering to explore statistical convergence.',
       legend:[['Incident','#55d9d0'],['Absorbed','#f17e80'],['Reflected','#f5bc70'],['Scattered','#b5a0ff']],
-      note:`Illustrative single-surface model. P(absorb) = 1 − P(reflect) − P(scatter) = ${fmt(a,2)}. The scene shows the first ${model.paths.length} photons of ${model.n.toLocaleString('en-US')}. Each test photon has equal statistical weight. pp = percentage points.`,
+      note:`Illustrative single-surface model. P(absorb) = ${fmt(a,2)}. Every traced photon has equal weight. Dense trajectories overlap as the sample grows. Changing parameters starts a fresh run. With both channels off every photon absorbs. pp = percentage points.`,
     });
   }
   if(id==='cavity'){

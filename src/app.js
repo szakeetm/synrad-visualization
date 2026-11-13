@@ -1,3 +1,4 @@
+import {resetMonteCarloRun,getMonteCarloRun} from './monte-carlo.js';
 import {renderMonteCarlo} from './monte-carlo-scene.js';
 import {experiments} from './experiments.js';
 import {getView,fmt} from './views.js';
@@ -27,6 +28,7 @@ experiments.forEach((e,i)=>{
 function select(id) {
   selected=experiments.find(e=>e.id===(id==='rough'?'reflection':id))??experiments[0];
   $('scene-viewport').scrollLeft=0;
+  $('monte-carlo-progress').hidden=selected.id!=='monte-carlo';
   $('scene-card').hidden=selected.id==='spectrum';$('chart-reset').hidden=selected.id!=='spectrum';
   if('energy' in states[selected.id]){const c=selected.controls.find(c=>c.key==='energy');sharedEnergy=Math.max(c.min,Math.min(c.max,sharedEnergy));states[selected.id].energy=sharedEnergy;}
   document.querySelectorAll('[data-id]').forEach(a=>{const active=a.dataset.id===selected.id;a.classList.toggle('active',active);if(active)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
@@ -48,14 +50,15 @@ function select(id) {
     if(!c.options&&c.type!=='checkbox'){const limits=document.createElement('div');limits.className='range-limits';limits.innerHTML=`<span>${c.min} ${c.unit}</span><span>${c.max} ${c.unit}</span>`;box.append(limits);}
     if(c.scale==='rapidity'){const hint=document.createElement('p');hint.className='control-hint';hint.textContent='Fine control near γ = 1';box.append(hint);}
     if(c.scale==='log'){const hint=document.createElement('p');hint.className='control-hint';hint.textContent=c.hint??'Logarithmic energy slider · presets include 45.6 GeV';box.append(hint);}
-    if(c.presets){const presets=document.createElement('div');presets.className='control-presets';presets.setAttribute('aria-label',`${c.label} presets`);for(const value of c.presets){const button=document.createElement('button');button.type='button';button.textContent=c.integer?value.toLocaleString('en-US'):String(value);button.setAttribute('aria-label',`Set ${c.label.toLowerCase()} to ${value} ${c.unit}`);button.addEventListener('click',()=>{states[selected.id][c.key]=value;input.value=controlPosition(value,c);if(c.key==='energy')sharedEnergy=value;update();});presets.append(button);}box.append(presets);}
-    input.addEventListener('input',()=>{const value=c.type==='checkbox'?input.checked:c.options?input.value:controlValue(Number(input.value),c);states[selected.id][c.key]=value;if(c.key==='energy')sharedEnergy=value;update();});controls.append(box);
+    if(c.presets){const presets=document.createElement('div');presets.className='control-presets';presets.setAttribute('aria-label',`${c.label} presets`);for(const value of c.presets){const button=document.createElement('button');button.type='button';button.textContent=c.integer?value.toLocaleString('en-US'):String(value);button.setAttribute('aria-label',`Set ${c.label.toLowerCase()} to ${value} ${c.unit}`);button.addEventListener('click',()=>{states[selected.id][c.key]=value;input.value=controlPosition(value,c);if(c.key==='energy')sharedEnergy=value;if(selected.id==='monte-carlo'){time=0;resetMonteCarloRun(states[selected.id]);}update();});presets.append(button);}box.append(presets);}
+    input.addEventListener('input',()=>{const value=c.type==='checkbox'?input.checked:c.options?input.value:controlValue(Number(input.value),c);states[selected.id][c.key]=value;if(c.key==='energy')sharedEnergy=value;if(selected.id==='monte-carlo'){time=0;resetMonteCarloRun(states[selected.id]);}update();});controls.append(box);
   }
   if(selected.id==='monte-carlo'){
     const button=document.createElement('button');button.type='button';button.className='sample-button';button.textContent='New sample';
     button.addEventListener('click',()=>{const state=states[selected.id];state.sampleSeed=(state.sampleSeed??41)+1;time=0;update();});
     controls.append(button);
   }
+  if(selected.id==='monte-carlo')resetMonteCarloRun(states[selected.id]);
   time=0;setPaused(paused);update();
 }
 function legend(container,items){container.replaceChildren();for(const [label,color]of items){const span=document.createElement('span');span.className='legend-key';const i=document.createElement('i');i.style.setProperty('--key',color);span.append(i,document.createTextNode(label));container.append(span);}}
@@ -76,9 +79,15 @@ function update() {
   $('metrics').replaceChildren(...view.metrics.map(m=>{const div=document.createElement('div');div.className='metric';const name=document.createElement('span');name.className='metric-name';name.textContent=m.name;const value=document.createElement('span');value.className='metric-value';value.textContent=m.value;div.append(name,value);return div;}));
   draw();
 }
-function draw(){if(selected.id==='spectrum')return;ctx.clearRect(0,0,900,400);ctx.fillStyle='#101d29';ctx.fillRect(0,0,900,400);ctx.strokeStyle='#7a9eab0b';ctx.lineWidth=1;for(let x=0;x<900;x+=30){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,400);ctx.stroke();}for(let y=0;y<400;y+=30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(900,y);ctx.stroke();}renderMonteCarlo(ctx,900,400,selected.id,states[selected.id],time)||renderCavity(ctx,900,400,selected.id,states[selected.id],time)||renderPolarization(ctx,900,400,selected.id,states[selected.id],time)||renderMagnet(ctx,900,400,selected.id,states[selected.id],time)||renderSource(ctx,900,400,selected.id,states[selected.id],time)||renderMaterial(ctx,900,400,selected.id,states[selected.id],time);}
-function setPaused(value){paused=value;$('pause').textContent=paused?'▶ Play':'Ⅱ Pause';$('pause').setAttribute('aria-pressed',String(paused));set('scene-label',paused?'EXPERIMENT PAUSED':selected.id==='monte-carlo'?'SAMPLED PATH REPLAY':'LIVE EXPERIMENT');}
-$('pause').addEventListener('click',()=>setPaused(!paused));
+function draw(){if(selected.id==='spectrum')return;if(selected.id==='monte-carlo'){renderMonteCarlo(ctx,900,400,selected.id,states[selected.id],time);
+  const run=getMonteCarloRun(states[selected.id]),progress=$('photon-progress');
+  progress.max=run.target;progress.value=run.n;
+  const status=run.n===run.target?'Complete':paused?'Paused':'Running';
+  set('photon-progress-status',`${Math.floor(100*run.n/run.target)}% · ${status}`);
+  progress.setAttribute('aria-valuetext',`${run.n.toLocaleString('en-US')} of ${run.target.toLocaleString('en-US')} photons traced. ${status}.`);
+  return;}ctx.clearRect(0,0,900,400);ctx.fillStyle='#101d29';ctx.fillRect(0,0,900,400);ctx.strokeStyle='#7a9eab0b';ctx.lineWidth=1;for(let x=0;x<900;x+=30){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,400);ctx.stroke();}for(let y=0;y<400;y+=30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(900,y);ctx.stroke();}renderCavity(ctx,900,400,selected.id,states[selected.id],time)||renderPolarization(ctx,900,400,selected.id,states[selected.id],time)||renderMagnet(ctx,900,400,selected.id,states[selected.id],time)||renderSource(ctx,900,400,selected.id,states[selected.id],time)||renderMaterial(ctx,900,400,selected.id,states[selected.id],time);}
+function setPaused(value){paused=value;$('pause').textContent=paused?'▶ Play':'Ⅱ Pause';$('pause').setAttribute('aria-pressed',String(paused));set('scene-label',paused?'EXPERIMENT PAUSED':selected.id==='monte-carlo'?'TRACING PHOTONS':'LIVE EXPERIMENT');}
+$('pause').addEventListener('click',()=>{setPaused(!paused);draw();});
 $('scene-zoom').addEventListener('click',()=>{
   const enlarged=$('scene-viewport').classList.toggle('enlarged');
   $('scene-zoom').setAttribute('aria-pressed',String(enlarged));
@@ -97,6 +106,7 @@ new ResizeObserver(([entry])=>{
   const width=Math.round(entry.contentRect.width);
   if(width!==chartWidth){chartWidth=width;update();}
 }).observe($('chart'));
-window.addEventListener('keydown',e=>{if(selected.id!=='spectrum'&&e.code==='Space'&&!['INPUT','SELECT','BUTTON','A','TEXTAREA'].includes(document.activeElement.tagName)&&!$('about').open){e.preventDefault();setPaused(!paused);}});
-function tick(now){if(!paused&&!document.hidden)time+=last?Math.min((now-last)/1000,.05):0;last=now;if(!paused&&!document.hidden)draw();requestAnimationFrame(tick);}
+window.addEventListener('keydown',e=>{if(selected.id!=='spectrum'&&e.code==='Space'&&!['INPUT','SELECT','BUTTON','A','TEXTAREA'].includes(document.activeElement.tagName)&&!$('about').open){e.preventDefault();setPaused(!paused);draw();}});
+let lastMonteCarloUpdate=0;
+function tick(now){if(!paused&&!document.hidden)time+=last?Math.min((now-last)/1000,.05):0;last=now;if(!paused&&!document.hidden){draw();if(selected.id==='monte-carlo'&&now-lastMonteCarloUpdate>=100){lastMonteCarloUpdate=now;update();}}requestAnimationFrame(tick);}
 select(location.hash.slice(1));setPaused(paused);requestAnimationFrame(tick);

@@ -76,6 +76,7 @@ export function drawChart(container,view) {
   const gradient=el('linearGradient',{id:'plot-fill',x1:'0',y1:'0',x2:'0',y2:'1'});gradient.append(el('stop',{offset:'0%','stop-color':'#208f86','stop-opacity':'.15'}),el('stop',{offset:'100%','stop-color':'#208f86','stop-opacity':'.01'}));defs.append(gradient);svg.append(defs);
   const data=el('g',{'clip-path':'url(#plot-clip)'});
   view.traces.forEach((tr,i)=>{
+    if(!tr.points.length)return;
     const path=tr.points.map(([x,y],j)=>`${j?'L':'M'}${tx(x).toFixed(2)},${ty(y).toFixed(2)}`).join(' ');
     if(i===0&&!view.logY)data.append(el('path',{d:`${path} L${tx(tr.points.at(-1)[0])},${ty(0)} L${tx(tr.points[0][0])},${ty(0)} Z`,fill:'url(#plot-fill)'}));
     data.append(el('path',{d:path,fill:'none',stroke:tr.color,'stroke-width':i===0?2.3:1.7,'stroke-linejoin':'round',...(tr.dashed?{'stroke-dasharray':'5 5'}:{})}));
