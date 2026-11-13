@@ -19,7 +19,7 @@ const canvas=$('scene'),ctx=canvas.getContext('2d');
 const set=(id,value)=>$(id).textContent=value;
 const nav=$('navigation');
 const synrad2d={id:'synrad2d'};
-const intro=document.createElement('a');intro.className='nav-item';intro.href='#synrad2d';intro.dataset.id='synrad2d';intro.innerHTML='<span class="nav-index">00</span> Radiation2D browser';nav.append(intro);
+const intro=document.createElement('a');intro.className='nav-item';intro.href='#synrad2d';intro.dataset.id='synrad2d';intro.innerHTML='<span class="nav-index">01</span> Radiation2D browser';nav.append(intro);
 const embeddedFrame=$('synrad2d-frame');
 let embeddedResize;
 embeddedFrame.addEventListener('load',()=>{
@@ -33,7 +33,7 @@ embeddedFrame.addEventListener('load',()=>{
 let group='';
 experiments.forEach((e,i)=>{
   if(e.group!==group){group=e.group;const title=document.createElement('div');title.className='nav-group';title.textContent=group;nav.append(title);}
-  const a=document.createElement('a');a.href=`#${e.id}`;a.className='nav-item';a.dataset.id=e.id;a.innerHTML=`<span class="nav-index">${String(i+1).padStart(2,'0')}</span> ${e.short}`;nav.append(a);
+  const a=document.createElement('a');a.href=`#${e.id}`;a.className='nav-item';a.dataset.id=e.id;a.innerHTML=`<span class="nav-index">${String(i+2).padStart(2,'0')}</span> ${e.short}`;nav.append(a);
 });
 
 function select(id) {
@@ -53,13 +53,13 @@ function select(id) {
     nav.scrollLeft+=active.getBoundingClientRect().left-nav.getBoundingClientRect().left-(nav.clientWidth-active.offsetWidth)/2;
   }
   if(embedded){
-    set('kicker','00 / Moving charge and radiation fields');set('title','Radiation2D browser');
+    set('kicker','01 / Moving charge and radiation fields');set('title','Radiation2D browser');
     set('description','Original Radiation2D and wavelet visualization method by Tsumoru Shintake.');
-    set('experiment-number','00');set('slides','SYNRAD TUTORIAL · SLIDE 2');
+    set('experiment-number','01');set('slides','SYNRAD TUTORIAL · SLIDE 2');
     if(!embeddedFrame.hasAttribute('src'))embeddedFrame.src='./synrad2d/index.html';
     return;
   }
-  set('kicker',selected.kicker);set('title',selected.title);set('description',selected.description);set('notice',selected.notice);set('explanation',selected.explanation);set('equation',selected.equation);set('slides',`SYNRAD TUTORIAL · SLIDES ${selected.slides}`);set('experiment-number',String(experiments.indexOf(selected)+1).padStart(2,'0'));
+  set('kicker',selected.kicker);set('title',selected.title);set('description',selected.description);set('notice',selected.notice);set('explanation',selected.explanation);set('equation',selected.equation);set('slides',`SYNRAD TUTORIAL · SLIDES ${selected.slides}`);set('experiment-number',String(experiments.indexOf(selected)+2).padStart(2,'0'));
   canvas.setAttribute('aria-label',`${selected.short}: ${selected.description} Geometry is schematic; the plot below contains physical units.`);
   const controls=$('controls');controls.replaceChildren();
   for(const c of selected.controls) {

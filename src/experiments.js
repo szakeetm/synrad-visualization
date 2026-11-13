@@ -16,7 +16,7 @@ const simulationControls = (photonOverrides = {}) => [
 export const experiments = [
   {
     id: 'spectrum', title: 'Synchrotron radiation spectrum', short: 'Spectrum', group: 'Emission',
-    kicker: '01 / Energy spectrum',
+    kicker: '02 / Energy spectrum',
     description: 'Compare photon flux and radiated power in equal 0.1% energy bands, using the logarithmic axes from the lecture.',
     notice: 'Double the electron energy at fixed radius: the critical photon energy rises eightfold.',
     equation: 'Ec [keV] = 2.218 × E [GeV]³ / ρ [m]',
@@ -31,7 +31,7 @@ export const experiments = [
   },
   {
     id: 'frames', title: 'Radiation in two reference frames', short: 'Reference frames', group: 'Geometry',
-    kicker: '02 / Relativistic beaming',
+    kicker: '03 / Relativistic beaming',
     description: 'As on slide 13, compare the broad dipole lobe in the instantaneous particle frame with the narrow forward radiation lobe in the laboratory.',
     notice: 'Start at γ = 1: both patterns coincide. Raise γ to squeeze the lab lobe forward. Switch the plot’s slice plane to see the dipole’s acceleration-axis null.',
     equation: 'dP/dΩ ∝ |n × [(n − β) × a]|² / (1 − n·β)⁵',
@@ -42,7 +42,7 @@ export const experiments = [
   },
   {
     id: 'vertical', title: 'Vertical angular distribution', short: 'Vertical distribution', group: 'Geometry',
-    kicker: '03 / Above and below the orbit',
+    kicker: '04 / Above and below the orbit',
     description: 'Synchrotron light is confined near the orbit plane. Its vertical opening also depends on which photon energies you select.',
     notice: 'Select softer photons to see a wider distribution. Increase electron energy to narrow the physical angle.',
     equation: 'u = γψ;  ξ = ½(Eph / Ec)(1 + u²)³ᐟ²',
@@ -52,7 +52,7 @@ export const experiments = [
   },
   {
     id: 'horizontal', title: 'Horizontal radiation fan', short: 'Horizontal distribution', group: 'Geometry',
-    kicker: '04 / Along the bending plane',
+    kicker: '05 / Along the bending plane',
     description: 'Each point on a bending trajectory emits light near its local tangent. Together those tangents form a horizontal fan.',
     notice: 'Increase the bend angle to widen the fan, then move the observation screen farther away.',
     equation: 'Fan width ≈ L × Δθ;  edge angular scale ≈ 1 / γ',
@@ -63,7 +63,7 @@ export const experiments = [
   },
   {
     id: 'polarization', title: 'Polarization', short: 'Polarization', group: 'Geometry',
-    kicker: '05 / Two polarization planes',
+    kicker: '06 / Two polarization planes',
     description: 'Watch photons build the parallel, perpendicular and sum XY heatmaps. The plot below shows sampled hit counts along the zero-angle slice.',
     notice: 'Start with a few photons to see individual hit pixels, then increase the count to reveal the σ and π patterns. The plot below counts actual hits in the central vertical pixel column.',
     equation: 'u = γθx; v = γθy;  Iσ ∝ (1 − u² + v²)² / (1 + u² + v²)⁵;  Iπ ∝ 4u²v² / (1 + u² + v²)⁵',
@@ -74,7 +74,7 @@ export const experiments = [
   },
   {
     id: 'reflection', title: 'Reflection and surface roughness', short: 'Reflection', group: 'Matter',
-    kicker: '06 / Grazing-incidence optics',
+    kicker: '07 / Grazing-incidence optics',
     description: 'Vary material, photon energy, grazing angle and surface roughness to compare the specular beam and scattered directions.',
     notice: 'Increase RMS roughness to weaken the specular beam and broaden the scattering fan.',
     equation: 'Rspec ≈ RFresnel × exp[−(4πσ sin θ / λ)²]',
@@ -84,7 +84,7 @@ export const experiments = [
   },
   {
     id: 'penetration', title: 'X-ray attenuation', short: 'Penetration', group: 'Matter',
-    kicker: '07 / Absorption in a material',
+    kicker: '08 / Absorption in a material',
     description: 'Each additional layer removes a fraction of the surviving beam. Harder photons generally travel farther in this simple model.',
     notice: 'Double the thickness: the transmission is squared. At zero thickness, every photon survives.',
     equation: 'T = I / I₀ = exp(−μt)',
@@ -94,7 +94,7 @@ export const experiments = [
   },
   {
     id: 'dipole', title: 'Dipole radiation', short: 'Dipole', group: 'Sources',
-    kicker: '08 / Dipole radiation source',
+    kicker: '09 / Dipole radiation source',
     description: 'A uniform transverse magnetic field bends the electron trajectory. Tangential radiation fills a fan whose spectrum and power follow the field and beam energy.',
     notice: 'Set the field to zero: the orbit becomes straight and synchrotron radiation vanishes. Double the field at fixed energy: the critical energy doubles and the power quadruples.',
     equation: 'Bρ [T·m] = E [GeV] / 0.2998;  P [kW] = 14.08 E⁴ I[A] L[m] / ρ²',
@@ -106,7 +106,7 @@ export const experiments = [
   },
   {
     id: 'quadrupole', title: 'Quadrupole radiation', short: 'Quadrupole', group: 'Sources',
-    kicker: '09 / Quadrupole radiation source',
+    kicker: '10 / Quadrupole radiation source',
     description: 'The quadrupole field vanishes at its center and grows with radius. A finite-width beam samples nonzero field even when its centroid is perfectly centered.',
     notice: 'Double the beam’s RMS size with zero offset: the estimated radiated power quadruples. Move the beam off-center and the power rises further.',
     equation: 'Bx = −Gy; By = −Gx;  ⟨B²⟩ = G²(2σ² + x₀²);  P ∝ E² I L ⟨B²⟩',
@@ -119,7 +119,7 @@ export const experiments = [
   },
   {
     id: 'insertion', title: 'Undulators and wigglers', short: 'Insertion devices', group: 'Sources',
-    kicker: '10 / Undulators & wigglers',
+    kicker: '11 / Undulators & wigglers',
     description: 'Alternating magnets make an electron weave. Radiation from successive periods can interfere to form narrow spectral peaks.',
     notice: 'Add periods to sharpen the harmonics. Increase K to move toward the broad wiggler regime.',
     equation: 'λ₁ = λu(1 + K² / 2 + γ²θ²) / (2γ²)',
@@ -131,7 +131,7 @@ export const experiments = [
   },
   {
     id: 'cavity', title: 'Radiation from longitudinal acceleration', short: 'Cavity radiation', group: 'Sources',
-    kicker: '11 / Longitudinal acceleration',
+    kicker: '12 / Longitudinal acceleration',
     description: 'Follow radiation energy packets through a virtual accelerating cavity. Raise the entrance energy to narrow the emission, or change the aperture to reveal wall interception.',
     notice: 'At the default 45.6 GeV, the longitudinal power peaks about 5.6 µrad from the axis: roughly 5.6 µm per metre. The displayed packets clear the cavity. Try 0.001 GeV to compare a broad, low-energy pattern.',
     equation: 'dP/dΩ ∝ sin²θ / (1 − β cosθ)⁵;  θpeak ≈ 1 / (2γ)',
@@ -143,7 +143,7 @@ export const experiments = [
   },
   {
     id: 'monte-carlo', title: 'Monte Carlo photon transport', short: 'Monte Carlo', group: 'Simulation',
-    kicker: '12 / From random photons to a solution',
+    kicker: '13 / From random photons to a solution',
     description: 'Follow a few synchrotron test photons at a wall, then increase the sample to see a stable absorption estimate emerge.',
     notice: 'Enable reflection or scattering to introduce random outcomes. Start with 10 photons, then choose 1,000,000. Adjust the simulation duration to control how quickly every selected photon is traced. New sample starts a fresh run.',
     equation: 'Â = Nabsorbed / N;  σ(Â) = √[A(1 − A) / N]',
