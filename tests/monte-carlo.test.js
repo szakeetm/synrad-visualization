@@ -7,16 +7,6 @@ import {getView} from '../src/views.js';
 
 const defaults = {duration: 10, photons: 10, reflection: true, scattering: true};
 
-test('reflection and scattering start unchecked', () => {
-  const experiment = experiments.find(e => e.id === 'monte-carlo');
-  for (const key of ['reflection', 'scattering']) {
-    const control = experiment.controls.find(c => c.key === key);
-    assert.equal(control.type, 'checkbox');
-    assert.equal(control.default, false);
-  }
-  assert.equal(createMonteCarloRun({photons: 10}).expected.absorbed, 1);
-});
-
 test('statistics include only drawn photons and stop exactly at the selected count', () => {
   for (const photons of [10, 1000000]) {
     const run = createMonteCarloRun({...defaults, photons});

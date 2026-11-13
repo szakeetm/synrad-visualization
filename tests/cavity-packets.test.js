@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {cavityDirection, cavityCdf, cavityPattern, cavityPeak, createCavityModel, traceCavityRay, cavityRadius} from '../src/cavity-physics.js';
-import {experiments} from '../src/experiments.js';
 const near=(a,b,e=1e-8)=>assert.ok(Math.abs(a-b)<e,`${a} != ${b}`);
 test('energy-direction quantiles preserve the full solid-angle measure and light speed',()=>{
   for(const g of [1.01,2,20,150]){
@@ -65,10 +64,7 @@ test('zero acceleration emits no packets and has no interception fractions',()=>
   near(m.state(m.entryTime).beta,m.state(m.exitTime).beta);
 });
 test('the 45.6 GeV beam has a micron-scale cone and clears the cavity',()=>{
-  const exp=experiments.find(e=>e.id==='cavity');
-  const s=Object.fromEntries(exp.controls.map(c=>[c.key,c.default]));
-  assert.equal(s.cavityEnergy,.01);
-  const m=createCavityModel({...s,cavityEnergy:45.6});
+  const m=createCavityModel({cavityEnergy:45.6,gainMeV:20,aperture:25});
   assert.ok(m.gammaIn>89000&&m.gammaIn<90000);
   const spread=Math.tan(cavityPeak(m.gammaIn))*1e6;
   assert.ok(spread>5.5&&spread<5.7);

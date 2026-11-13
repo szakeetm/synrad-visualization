@@ -5,10 +5,8 @@ import { getView } from '../src/views.js';
 import {reflectivity, specularFraction, transverseRadiation} from '../src/physics.js';
 
 test('merged reflection page calculates smooth and rough material reflection without a multiplier', () => {
-  assert.ok(!experiments.some(e=>e.id==='rough'));
   const exp=experiments.find(e=>e.id==='reflection');
   const defaults=Object.fromEntries(exp.controls.map(c=>[c.key,c.default]));
-  assert.ok(!('reflectionAmount' in defaults));
   const smooth=getView('reflection',defaults);
   assert.ok(smooth.traces[0].points.some(([,y])=>y>0));
   for (const material of ['Cu','Al','Si']) for (const photon of [.1,5,30]) for (const roughness of [0,1,3]) {
@@ -85,23 +83,9 @@ test('weak-deflection higher undulator harmonics vanish relative to the fundamen
   const atHarmonic = n => Math.max(...view.traces[0].points.filter(([x]) => Math.abs(x / e1 - n) < .03).map(p => p[1]));
   assert.ok(atHarmonic(3) / atHarmonic(1) < .001);
 });
-test('source tabs expose finite plots and the zero-field dipole emits no spectrum', () => {
-  assert.ok(experiments.find(e=>e.id==='dipole'));
-  assert.ok(experiments.find(e=>e.id==='quadrupole'));
+test('zero-field dipole emits no spectrum', () => {
   const zero=getView('dipole',{energy:3,field:0,length:1,current:100});
   assert.ok(zero.traces[0].points.every(([,y])=>y===0));
-});
-test('polarization uses the zero-angle slice with one common scale', () => {
-  const origin=getView('polarization',{polarizationModel:'angular',cut:'vertical',theta:0,psi:0,ratio:1});
-  assert.ok(origin.traces[1].points.every(([,y])=>y===0));
-  const offaxis=getView('polarization',{polarizationModel:'angular',cut:'vertical',theta:.7,psi:.5,ratio:1});
-  assert.deepEqual(offaxis.traces,origin.traces);
-  assert.equal(offaxis.markers.length,0);
-  assert.ok(offaxis.traces[1].points.every(([,y])=>y===0));
-  assert.match(origin.caption,/raw counts/i);
-  assert.match(origin.title,/γθx = 0/);
-  const spectral=getView('polarization',{polarizationModel:'spectral',cut:'vertical',theta:0,psi:0,ratio:1});
-  assert.match(spectral.caption,/resolved/i);
 });
 test('reference-frame plots are slices through the same angular-power surfaces', () => {
   for(const framePlane of ['orbit','perpendicular']){

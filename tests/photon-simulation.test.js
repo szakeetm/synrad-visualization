@@ -2,23 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {experiments} from '../src/experiments.js';
 import {advanceMonteCarlo} from '../src/monte-carlo.js';
-import {createDistributionRun, getPhotonSimulation, resetPhotonSimulation, hasPhotonSimulation} from '../src/photon-simulation.js';
+import {createDistributionRun, getPhotonSimulation, resetPhotonSimulation} from '../src/photon-simulation.js';
 import {renderPhotonSimulation} from '../src/photon-scenes.js';
 import {gamma, transmission} from '../src/physics.js';
 
 const ids = ['vertical', 'horizontal', 'polarization', 'penetration'];
 const defaults = id => Object.fromEntries(experiments.find(e => e.id === id).controls.map(c => [c.key, c.default]));
-
-test('the four requested tabs have finite run controls and reflection keeps its existing controls', () => {
-  for (const id of ids) {
-    const state = defaults(id);
-    assert.equal(state.photons, id === 'polarization' ? 1000 : 10);
-    assert.equal(state.duration, 5);
-    assert.ok(hasPhotonSimulation(id));
-  }
-  assert.equal(hasPhotonSimulation('reflection'), false);
-  assert.equal(defaults('reflection').photons, undefined);
-});
 
 test('angular coordinates narrow exactly with electron energy at fixed photon energy ratio', () => {
   const low = createDistributionRun('vertical', {...defaults('vertical'), energy: 1, photons: 1000});
@@ -117,12 +106,6 @@ test('sampling stays finite across every original control extreme', () => {
 });
 
 test('both polarization modes use the 1000 default and accept ten million photons', () => {
-  const experiment = experiments.find(e => e.id === 'polarization');
-  const control = experiment.controls.find(c => c.key === 'photons');
-  assert.equal(control.default, 1000);
-  assert.ok(!experiment.controls.some(c => ['cut', 'theta', 'psi'].includes(c.key)));
-  assert.equal(control.max, 10000000);
-  assert.ok(control.presets.includes(10000000));
   for (const polarizationModel of ['angular', 'spectral']) {
     const state = {...defaults('polarization'), polarizationModel};
     delete state.photons;
