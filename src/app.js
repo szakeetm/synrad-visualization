@@ -37,7 +37,7 @@ experiments.forEach((e,i)=>{
 });
 
 function select(id) {
-  const embedded=id==='synrad2d';
+  const embedded=!id||id==='synrad2d';
   selected=embedded?synrad2d:experiments.find(e=>e.id===(id==='rough'?'reflection':id))??experiments[0];
   $('synrad2d-panel').hidden=!embedded;
   $('experiment-workspace').hidden=embedded;
