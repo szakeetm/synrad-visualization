@@ -8,6 +8,11 @@ const material = () => ({ key: 'material', label: 'Material', default: 'Cu', opt
   { value: 'Si', label: 'Silicon · Si' },
 ] });
 
+const simulationControls = (photonOverrides = {}) => [
+  { key: 'photons', label: 'Test photons', min: 10, max: 1000000, step: 1, scale: 'log', integer: true, hint: 'Logarithmic count slider · every selected photon is traced', presets: [10, 100, 1000, 10000, 100000, 1000000], unit: '', default: 10, ...photonOverrides },
+  { key: 'duration', label: 'Simulation duration', min: 1, max: 30, step: 1, unit: 's', default: 5 },
+];
+
 export const experiments = [
   {
     id: 'spectrum', title: 'Synchrotron radiation spectrum', short: 'Spectrum', group: 'Emission',
@@ -43,7 +48,7 @@ export const experiments = [
     equation: 'u = γψ;  ξ = ½(Eph / Ec)(1 + u²)³ᐟ²',
     explanation: 'The characteristic angular scale is 1 / γ. At a selected photon energy, the parallel component is proportional to (1 + u²)² K₂⁄₃(ξ)² and the perpendicular component to u²(1 + u²) K₁⁄₃(ξ)². The perpendicular component vanishes exactly in the orbit plane. Curves use the ideal single-electron distribution; electron-beam emittance and detector resolution are omitted.',
     slides: '14–16',
-    controls: [energy(), ratio()],
+    controls: [energy(), ratio(), ...simulationControls()],
   },
   {
     id: 'horizontal', title: 'Horizontal radiation fan', short: 'Horizontal distribution', group: 'Geometry',
@@ -54,21 +59,18 @@ export const experiments = [
     explanation: 'For a uniform bend, the range of tangent directions is the bend angle Δθ. The plotted teaching model convolves a uniform angular fan with a finite-width kernel on the scale 1 / γ. At small angles the footprint width is approximately observation distance L times Δθ. The scene exaggerates angles; it omits finite source size and detailed short-magnet interference.',
     slides: '17–18, 25',
     controls: [energy(), { key: 'bend', label: 'Magnet bend angle', min: 1, max: 100, step: 1, unit: 'mrad', default: 30 },
-      { key: 'distance', label: 'Screen distance', min: 1, max: 30, step: 1, unit: 'm', default: 10 }],
+      { key: 'distance', label: 'Screen distance', min: 1, max: 30, step: 1, unit: 'm', default: 10 }, ...simulationControls()],
   },
   {
     id: 'polarization', title: 'Polarization', short: 'Polarization', group: 'Geometry',
     kicker: '05 / Two polarization planes',
-    description: 'Compare where the parallel and perpendicular components go. Explore the full angular pattern, then switch to the energy-resolved polarization ellipse.',
-    notice: 'In angular-map mode, move the horizontal slice above the orbit plane to reveal π’s two peaks. The full map has four lobes and dark horizontal and vertical axes.',
+    description: 'Watch photons build the parallel, perpendicular and sum XY heatmaps. The plot below shows sampled hit counts along the zero-angle slice.',
+    notice: 'Start with a few photons to see individual hit pixels, then increase the count to reveal the σ and π patterns. The plot below counts actual hits in the central vertical pixel column.',
     equation: 'u = γθx; v = γθy;  Iσ ∝ (1 − u² + v²)² / (1 + u² + v²)⁵;  Iπ ∝ 4u²v² / (1 + u² + v²)⁵',
-    explanation: 'σ is the field component parallel to the orbit plane, π is perpendicular. The angular maps show frequency-integrated power from a local transverse acceleration (the short-bend angular pattern on slide 18). All three maps share one logarithmic scale; the slice plot uses one common linear scale. Integrated over all directions, σ carries 7/8 and π 1/8 of the power, not that fraction at every angle. The energy-resolved mode instead shows the Bessel-function vertical distribution for a long bend and its polarization ellipse. These are different angular integrations and must not be confused. In that mode the quarter-cycle phase difference produces ellipticity, whose handedness reverses across the orbit plane.',
+    explanation: 'σ is the field component parallel to the orbit plane, π is perpendicular. The angular slices show frequency-integrated power from a local transverse acceleration (the short-bend angular pattern on slide 18). The plotted components share one common normalization. The heatmaps accumulate σ, π and total hits across the displayed XY window. The lower histogram reads actual sampled counts from the central pixel column at zero horizontal angle. Integrated over all directions, σ carries 7/8 and π 1/8 of the power, not that fraction at every angle. The energy-resolved mode samples the Bessel-function vertical distribution for a long bend. These are different angular integrations and must not be confused. The σ/π colors represent analyzer outcomes. The underlying quarter-cycle field phase difference gives ellipticity away from the orbit plane, with handedness reversing across it.',
     slides: '16, 18',
-    controls: [{ key: 'polarizationModel', label: 'Polarization view', default: 'angular', options: [{ value: 'angular', label: 'Angular power maps · integrated' }, { value: 'spectral', label: 'Energy-resolved ellipse' }] },
-      { key: 'cut', label: 'Angular slice', default: 'vertical', options: [{ value: 'vertical', label: 'Vertical · vary θy at fixed θx' }, { value: 'horizontal', label: 'Horizontal · vary θx at fixed θy' }], showWhen: { key: 'polarizationModel', value: 'angular' } },
-      { key: 'theta', label: 'Horizontal observation angle', min: -3, max: 3, step: .05, unit: 'γθx', default: .7, showWhen: { key: 'polarizationModel', value: 'angular' } },
-      { key: 'psi', label: 'Vertical observation angle', min: -3, max: 3, step: .05, unit: 'γθy', default: .7 },
-      { ...ratio(), showWhen: { key: 'polarizationModel', value: 'spectral' } }],
+    controls: [{ key: 'polarizationModel', label: 'Polarization view', default: 'angular', options: [{ value: 'angular', label: 'XY heatmaps · integrated' }, { value: 'spectral', label: 'Energy-resolved photons' }] },
+      { ...ratio(), showWhen: { key: 'polarizationModel', value: 'spectral' } }, ...simulationControls({default: 1000, max: 10000000, presets: [10, 100, 1000, 10000, 100000, 1000000, 10000000]})],
   },
   {
     id: 'reflection', title: 'Reflection and surface roughness', short: 'Reflection', group: 'Matter',
@@ -88,7 +90,7 @@ export const experiments = [
     equation: 'T = I / I₀ = exp(−μt)',
     explanation: 'Beer–Lambert attenuation applies to the uncollided, monoenergetic primary beam. Here μ follows an illustrative energy-dependent photoelectric power law, rather than tabulated material data. Absorption edges, scattering, secondary radiation and surface reflection are omitted. The scene represents normal incidence. A broad spectrum would harden as the more strongly attenuated low-energy photons are removed; use NIST XCOM for quantitative coefficients.',
     slides: '21',
-    controls: [photon(), { key: 'thickness', label: 'Material thickness', min: 0, max: 500, step: 5, unit: 'µm', default: 25 }, material()],
+    controls: [photon(), { key: 'thickness', label: 'Material thickness', min: 0, max: 500, step: 5, unit: 'µm', default: 25 }, material(), ...simulationControls()],
   },
   {
     id: 'dipole', title: 'Dipole radiation', short: 'Dipole', group: 'Sources',
@@ -148,8 +150,7 @@ export const experiments = [
     explanation: 'Each equal-weight test photon meets one surface. Draw a uniform random number u between 0 and 1. With both channels enabled, u < 0.30 gives specular reflection, 0.30 ≤ u < 0.50 gives diffuse scattering, and the remaining photons absorb. Reflected and scattered photons leave through the open region above the wall. Turning off a channel transfers its probability to absorption. These fixed probabilities and schematic directions illustrate Monte Carlo transport of synchrotron photons. A material calculation would sample photon energy and emission direction and use energy- and angle-dependent surface data. The plot estimates the fraction absorbed at this first encounter. Every selected photon is drawn once over the chosen duration, which defaults to 5 seconds. The plot and totals include only photons already drawn. Changing parameters starts a fresh run with the same random sequence. With reflection and scattering off, every photon absorbs. Independent samples fluctuate, with typical error decreasing as 1/√N. The dashed solution follows directly from the enabled probabilities. The two sampling-range curves show A ± 1.96σ, clipped to [0, 1], using the known model probability A. They give an approximate 95% range at each N for large samples. Individual estimates can move away from the solution as N increases.',
     slides: '20–23 · MONTE CARLO EXTENSION',
     controls: [
-      { key: 'photons', label: 'Test photons', min: 10, max: 1000000, step: 1, scale: 'log', integer: true, hint: 'Logarithmic count slider · every selected photon is traced', presets: [10, 100, 1000, 10000, 100000, 1000000], unit: '', default: 10 },
-      { key: 'duration', label: 'Simulation duration', min: 1, max: 30, step: 1, unit: 's', default: 5 },
+      ...simulationControls(),
       { key: 'reflection', label: 'Reflection · probability 30%', type: 'checkbox', default: false },
       { key: 'scattering', label: 'Scattering · probability 20%', type: 'checkbox', default: false },
     ],

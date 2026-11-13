@@ -91,13 +91,15 @@ test('source tabs expose finite plots and the zero-field dipole emits no spectru
   const zero=getView('dipole',{energy:3,field:0,length:1,current:100});
   assert.ok(zero.traces[0].points.every(([,y])=>y===0));
 });
-test('polarization angular cuts keep one common scale and respect pi nodal axes', () => {
+test('polarization uses the zero-angle slice with one common scale', () => {
   const origin=getView('polarization',{polarizationModel:'angular',cut:'vertical',theta:0,psi:0,ratio:1});
   assert.ok(origin.traces[1].points.every(([,y])=>y===0));
   const offaxis=getView('polarization',{polarizationModel:'angular',cut:'vertical',theta:.7,psi:.5,ratio:1});
-  assert.ok(offaxis.traces[1].points.some(([,y])=>y>0));
-  assert.equal(offaxis.traces[1].points.find(([x])=>x===0)[1],0);
-  assert.match(origin.caption,/integrated/i);
+  assert.deepEqual(offaxis.traces,origin.traces);
+  assert.equal(offaxis.markers.length,0);
+  assert.ok(offaxis.traces[1].points.every(([,y])=>y===0));
+  assert.match(origin.caption,/raw counts/i);
+  assert.match(origin.title,/γθx = 0/);
   const spectral=getView('polarization',{polarizationModel:'spectral',cut:'vertical',theta:0,psi:0,ratio:1});
   assert.match(spectral.caption,/resolved/i);
 });
