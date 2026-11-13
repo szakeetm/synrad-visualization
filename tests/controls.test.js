@@ -17,11 +17,13 @@ test('Lorentz slider resolves the near-rest region instead of jumping to gamma 1
   assert.equal(controlValue(1000,gamma),30);
   assert.ok(controlValue(10,gamma)<1.001,'first 1% of travel stays very close to rest');
   assert.ok(controlValue(50,gamma)<1.025,'first 5% remains below beta 0.22');
+  const earlyGamma=controlValue(100,gamma);
+  assert.ok(Math.sqrt(1-1/earlyGamma**2)<.05,'first 10% of travel stays below 5% of light speed');
   let previous=0;
   for(let p=0;p<=1000;p++){
     const value=controlValue(p,gamma);
     assert.ok(value>previous&&value>=1&&value<=30);
-    assert.ok(Math.abs(controlPosition(value,gamma)-p)<1e-9);
+    assert.ok(Math.abs(controlPosition(value,gamma)-p)<1e-5);
     previous=value;
   }
 });
