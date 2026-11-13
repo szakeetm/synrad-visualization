@@ -56,3 +56,5 @@ main{margin-left:238px;padding:0 42px;max-width:1740px}.topbar{height:44px;borde
 .run-progress progress::-webkit-progress-bar{background:#263b4b;border-radius:4px}
 .run-progress progress::-webkit-progress-value{background:#55d9d0;border-radius:4px}
 .run-progress progress::-moz-progress-bar{background:#55d9d0;border-radius:4px}
+#synrad2d-frame{display:block;width:100%;height:1100px;border:1px solid var(--line);border-radius:9px;background:#f7f8f5}
+#experiment-workspace[hidden],#experiment-model[hidden],#synrad2d-panel[hidden]{display:none}

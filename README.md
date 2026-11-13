@@ -1,6 +1,6 @@
 # CAS2026 - Synrad visualization
 
-A browser teaching companion to **“Synrad tutorial”**, Márton Ady and Gabriel Saretti (CERN), CAS Prague, 16 November 2026. Twelve experiments pair animations with controls, plots and equations. The first navigation item opens the separately hosted [Radiation 2D demo](https://szakeetm.github.io/radiation2d-browser/) in a new tab. Its source, tests, credits and license are maintained in the adjacent `../synrad2d-browser` repository ([GitHub](https://github.com/szakeetm/radiation2d-browser)); this project does not bundle it.
+A browser teaching companion to **“Synrad tutorial”**, Márton Ady and Gabriel Saretti (CERN), CAS Prague, 16 November 2026. The experiments pair animations with controls, plots and equations. The **Radiation2D browser** tab embeds the bundled browser edition of Radiation2D inside the suite. Its local source, tests, credits and GPL-3.0 license are included in `synrad2d/`. **Tsumoru Shintake** created the original Radiation2D and wavelet visualization method. See [Radiation2D browser credits and provenance](synrad2d/README.md).
 
 ## Run
 
@@ -26,6 +26,7 @@ The numerical tests check critical-energy scaling, the universal spectrum, direc
 
 | View | What to change | Lecture slides |
 | --- | --- | --- |
+| Radiation2D browser | Drag a charge, oscillator, dipole, wiggler, virtual cavity, field lines and wavefronts | 2 |
 | Spectrum | Flux/power per 0.1% bandwidth, absolute/peak scale, energy presets, radius, dipole length, current | 7–12 |
 | Reference frames | Shaded 3D dipole/forward lobes, demonstration Lorentz factor, angular slice plane | 13 |
 | Vertical distribution | Electron energy and photon energy / critical energy | 14–16 |
@@ -70,7 +71,7 @@ The lecture informed the topic order, explanations and equations. Its PDF was re
 - [Lawrence Berkeley National Laboratory, X-Ray Data Booklet](https://xdb.lbl.gov/): synchrotron radiation and X-ray optics.
 - [Henke/CXRO X-ray optical constants and reflectivity tools](https://henke.lbl.gov/optical_constants/): quantitative optical data and grazing-angle conventions. B. L. Henke, E. M. Gullikson and J. C. Davis, *Atomic Data and Nuclear Data Tables* **54** (1993), 181–342, cited on lecture slide 20.
 - [NIST X-ray mass attenuation coefficients](https://physics.nist.gov/PhysRefData/XrayMassCoef/cover.html), J. H. Hubbell and S. M. Seltzer, cited on lecture slide 21. For quantitative attenuation calculations, use these tables or [NIST XCOM](https://physics.nist.gov/PhysRefData/Xcom/html/xcom1.html).
-- T. Shintake, [“Real-time animation of synchrotron radiation”](https://doi.org/10.1016/S0168-9002(03)00844-1), *Nuclear Instruments and Methods A* **507** (2003), 89–92: the separate Radiation 2D demonstration referenced on lecture slide 2.
+- Tsumoru Shintake, [“Real-time animation of synchrotron radiation”](https://doi.org/10.1016/S0168-9002(03)00844-1), *Nuclear Instruments and Methods A* **507** (2003), 89–92: the integrated Radiation2D browser demonstration referenced on lecture slide 2.
 
 ## Hosting
 
@@ -78,7 +79,7 @@ The app is a static site. The GitHub Pages workflow publishes the repository's a
 
 ## License
 
-GPL-3.0-only; see [LICENSE](LICENSE). The separately maintained [Radiation 2D app](https://github.com/szakeetm/radiation2d-browser) retains its own visible credits, provenance and license. No lecture PDF or Windows Radiation2D binary is redistributed.
+GPL-3.0-only; see [LICENSE](LICENSE). The bundled [Radiation2D browser edition](synrad2d/README.md) includes its visible credits, provenance and [GPL-3.0 license](synrad2d/LICENSE). No lecture PDF or Windows Radiation2D binary is redistributed.
 
 ## Cavity radiation packets
 
