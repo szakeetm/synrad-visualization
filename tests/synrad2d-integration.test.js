@@ -130,7 +130,7 @@ test('deep links, legacy links and unknown links select a usable experiment', as
       assert.equal(element('title').textContent, experiment.title);
       assert.equal(element('synrad2d-panel').hidden, true);
       assert.ok(element('metrics').children.length > 0);
-      assert.equal(element('monte-carlo-progress').hidden, !['vertical', 'polarization', 'penetration', 'monte-carlo'].includes(experiment.id));
+      assert.equal(element('monte-carlo-progress').hidden, !['vertical', 'polarization', 'penetration', 'monte-carlo', 'quadrupole'].includes(experiment.id));
       for (const control of experiment.controls) assert.equal(typeof element(`control-${control.key}`).events.input, 'function');
     }
     navigate('rough');
@@ -225,5 +225,37 @@ test('space pauses the experiment while preserving keyboard input and dialog int
       assert.equal(space(), false);
       assert.equal(element('pause').getAttribute('aria-pressed'), 'false');
     }
+  });
+});
+
+test('quadrupole photon flight pauses, completes and restarts on control changes',async()=>{
+  await withApp('#quadrupole',({element,frames,input,preset})=>{
+    assert.equal(element('monte-carlo-progress').hidden,false);
+    assert.equal(element('photon-progress').value,0);
+    frames(30);
+    const inFlight=element('photon-progress').value;
+    assert.ok(inFlight<100);
+    element('pause').events.click();
+    frames(100);
+    assert.equal(element('photon-progress').value,inFlight);
+    element('pause').events.click();
+    frames(300);
+    assert.equal(element('photon-progress').value,100);
+    assert.match(element('photon-progress-status').textContent,/Complete/);
+    input('targetDistance',10);
+    assert.equal(element('photon-progress').value,0);
+    frames(300);
+    assert.equal(element('photon-progress').value,100);
+    preset('photons',10);
+    assert.equal(element('photon-progress').max,10);
+    assert.equal(element('photon-progress').value,0);
+    input('gradient',0);
+    assert.equal(element('photon-progress').max,1);
+    assert.equal(element('photon-progress').value,1);
+    assert.match(element('photon-progress-status').textContent,/No radiation/);
+    element('reset').events.click();
+    assert.equal(element('photon-progress').max,100);
+    assert.equal(element('photon-progress').value,0);
+    assert.equal(Number(element('control-targetDistance').value),5);
   });
 });

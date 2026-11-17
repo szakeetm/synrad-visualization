@@ -10,7 +10,9 @@ import {renderMagnet} from './magnet-scenes.js';
 import {controlPosition,controlValue} from './controls.js';
 import {renderCavity} from './cavity-scene.js';
 import {drawCavityLobes} from './cavity-lobes.js';
+import {getQuadrupoleModel,quadrupoleSnapshot} from './quadrupole-model.js';
 
+const hasTimedSimulation=id=>id==='quadrupole'||hasPhotonSimulation(id);
 const $=id=>document.getElementById(id);
 const states=Object.fromEntries(experiments.map(e=>[e.id,Object.fromEntries(e.controls.map(c=>[c.key,c.default]))]));
 const plotScales={};
@@ -44,7 +46,7 @@ function select(id) {
   $('experiment-model').hidden=embedded;
   if(!embedded){embeddedResize?.disconnect();embeddedFrame.removeAttribute('src');}
   $('scene-viewport').scrollLeft=0;
-  $('monte-carlo-progress').hidden=!hasPhotonSimulation(selected.id);
+  $('monte-carlo-progress').hidden=!hasTimedSimulation(selected.id);
   $('scene-card').hidden=selected.id==='spectrum';$('chart-reset').hidden=selected.id!=='spectrum';
   if(!embedded&&'energy' in states[selected.id]){const c=selected.controls.find(c=>c.key==='energy');sharedEnergy=Math.max(c.min,Math.min(c.max,sharedEnergy));states[selected.id].energy=sharedEnergy;}
   document.querySelectorAll('[data-id]').forEach(a=>{const active=a.dataset.id===selected.id;a.classList.toggle('active',active);if(active)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
@@ -73,15 +75,15 @@ function select(id) {
     if(!c.options&&c.type!=='checkbox'){const limits=document.createElement('div');limits.className='range-limits';limits.innerHTML=`<span>${c.min} ${c.unit}</span><span>${c.max} ${c.unit}</span>`;box.append(limits);}
     if(c.scale==='rapidity'){const hint=document.createElement('p');hint.className='control-hint';hint.textContent='Fine control near γ = 1';box.append(hint);}
     if(c.scale==='log'){const hint=document.createElement('p');hint.className='control-hint';hint.textContent=c.hint??'Logarithmic energy slider · presets include 45.6 GeV';box.append(hint);}
-    if(c.presets){const presets=document.createElement('div');presets.className='control-presets';presets.setAttribute('aria-label',`${c.label} presets`);for(const value of c.presets){const button=document.createElement('button');button.type='button';button.textContent=c.integer?value.toLocaleString('en-US'):String(value);button.setAttribute('aria-label',`Set ${c.label.toLowerCase()} to ${value} ${c.unit}`);button.addEventListener('click',()=>{states[selected.id][c.key]=value;input.value=controlPosition(value,c);if(c.key==='energy')sharedEnergy=value;if(hasPhotonSimulation(selected.id)){time=0;resetPhotonSimulation(selected.id,states[selected.id]);}update();});presets.append(button);}box.append(presets);}
-    input.addEventListener('input',()=>{const value=c.type==='checkbox'?input.checked:c.options?input.value:controlValue(Number(input.value),c);states[selected.id][c.key]=value;if(c.key==='energy')sharedEnergy=value;if(hasPhotonSimulation(selected.id)){time=0;resetPhotonSimulation(selected.id,states[selected.id]);}update();});controls.append(box);
+    if(c.presets){const presets=document.createElement('div');presets.className='control-presets';presets.setAttribute('aria-label',`${c.label} presets`);for(const value of c.presets){const button=document.createElement('button');button.type='button';button.textContent=c.integer?value.toLocaleString('en-US'):String(value);button.setAttribute('aria-label',`Set ${c.label.toLowerCase()} to ${value} ${c.unit}`);button.addEventListener('click',()=>{states[selected.id][c.key]=value;input.value=controlPosition(value,c);if(c.key==='energy')sharedEnergy=value;if(hasTimedSimulation(selected.id)){time=0;resetPhotonSimulation(selected.id,states[selected.id]);}update();});presets.append(button);}box.append(presets);}
+    input.addEventListener('input',()=>{const value=c.type==='checkbox'?input.checked:c.options?input.value:controlValue(Number(input.value),c);states[selected.id][c.key]=value;if(c.key==='energy')sharedEnergy=value;if(hasTimedSimulation(selected.id)){time=0;resetPhotonSimulation(selected.id,states[selected.id]);}update();});controls.append(box);
   }
-  if(hasPhotonSimulation(selected.id)){
+  if(hasTimedSimulation(selected.id)){
     const button=document.createElement('button');button.type='button';button.className='sample-button';button.textContent='New sample';
     button.addEventListener('click',()=>{const state=states[selected.id];state.sampleSeed=(state.sampleSeed??41)+1;time=0;update();});
     controls.append(button);
   }
-  if(hasPhotonSimulation(selected.id))resetPhotonSimulation(selected.id,states[selected.id]);
+  if(hasTimedSimulation(selected.id))resetPhotonSimulation(selected.id,states[selected.id]);
   time=0;setPaused(paused);update();
 }
 function legend(container,items){container.replaceChildren();for(const [label,color]of items){const span=document.createElement('span');span.className='legend-key';const i=document.createElement('i');i.style.setProperty('--key',color);span.append(i,document.createTextNode(label));container.append(span);}}
@@ -105,7 +107,18 @@ function update() {
 }
 function draw(){
   if(selected.id==='spectrum'||selected.id==='synrad2d')return;
-  if(hasPhotonSimulation(selected.id)){
+  if(selected.id==='quadrupole'){
+    const state=states[selected.id],model=getQuadrupoleModel(state),snapshot=quadrupoleSnapshot(model,time);
+    ctx.clearRect(0,0,900,400);ctx.fillStyle='#101d29';ctx.fillRect(0,0,900,400);
+    renderMagnet(ctx,900,400,selected.id,state,time);
+    const progress=$('photon-progress'),total=model.packets.length;
+    progress.max=Math.max(1,total);progress.value=total?snapshot.resolved:1;
+    const status=total===0?'No radiation':snapshot.resolved===total?'Complete':paused?'Paused':'Running';
+    set('photon-progress-status',`${total?Math.floor(100*snapshot.resolved/total):100}% · ${status} · ${snapshot.hits} target hits · ${snapshot.intercepted} bore hits`);
+    progress.setAttribute('aria-valuetext',`${snapshot.resolved} of ${total} photon packets arrived. ${snapshot.flying.length} in flight. ${status}.`);
+    return;
+  }
+  if(hasTimedSimulation(selected.id)){
     const state=states[selected.id];
     renderMonteCarlo(ctx,900,400,selected.id,state,time)||renderPhotonSimulation(ctx,900,400,selected.id,state,time);
     const run=getPhotonSimulation(selected.id,state),progress=$('photon-progress');
@@ -122,7 +135,7 @@ function draw(){
   renderCavity(ctx,900,400,selected.id,states[selected.id],time)||renderMagnet(ctx,900,400,selected.id,states[selected.id],time)||renderSource(ctx,900,400,selected.id,states[selected.id],time)||renderMaterial(ctx,900,400,selected.id,states[selected.id],time);
 }
 
-function setPaused(value){paused=value;$('pause').textContent=paused?'▶ Play':'Ⅱ Pause';$('pause').setAttribute('aria-pressed',String(paused));set('scene-label',paused?'EXPERIMENT PAUSED':hasPhotonSimulation(selected.id)?'TRACING PHOTONS':'LIVE EXPERIMENT');}
+function setPaused(value){paused=value;$('pause').textContent=paused?'▶ Play':'Ⅱ Pause';$('pause').setAttribute('aria-pressed',String(paused));set('scene-label',paused?'EXPERIMENT PAUSED':hasTimedSimulation(selected.id)?'TRACING PHOTONS':'LIVE EXPERIMENT');}
 $('pause').addEventListener('click',()=>{setPaused(!paused);update();});
 $('scene-zoom').addEventListener('click',()=>{
   const enlarged=$('scene-viewport').classList.toggle('enlarged');

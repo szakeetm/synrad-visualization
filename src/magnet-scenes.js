@@ -1,5 +1,6 @@
+import {renderQuadrupole} from './quadrupole-scene.js';
 // Source geometries are schematic; time controls animation only.
-import { dipoleProperties, quadrupoleField } from './physics.js';
+import { dipoleProperties } from './physics.js';
 
 const C = { cyan: '#55d9d0', amber: '#f5bc70', purple: '#b5a0ff', ink: '#e3edf0', muted: '#8c9fa9', grid: '#293e49' };
 const TAU = Math.PI * 2;
@@ -60,57 +61,8 @@ function dipole(ctx, s, time) {
   text(ctx, 'Radiation brightness and visible photon count are schematic.', 56, 382, C.muted, 11);
 }
 
-function quadrupole(ctx, s, time) {
-  const G = s.gradient ?? 10, sigma = s.sigma ?? .5, offset = s.offset ?? 0;
-  text(ctx, 'A quadrupole has no field on its magnetic axis', 30, 32, C.ink, 14);
-  text(ctx, 'Transverse cross-section · electron travels out of page (+z)', 30, 55, C.muted, 11);
-  const cx = 240, cy = 212, scale = 28; // Fixed mm-to-display scale preserves offset/size comparisons.
-  ctx.beginPath(); ctx.arc(cx, cy, 133, 0, TAU); ctx.strokeStyle = C.grid; ctx.lineWidth = 1; ctx.stroke();
-  line(ctx, [[cx - 150, cy], [cx + 150, cy]], C.grid, 1, [4, 5]);
-  line(ctx, [[cx, cy - 140], [cx, cy + 140]], C.grid, 1, [4, 5]);
-  text(ctx, 'x →', cx + 155, cy + 4, C.muted, 11); text(ctx, 'y ↑', cx + 8, cy - 140, C.muted, 11);
-  for (let ix = -3; ix <= 3; ix++) for (let iy = -3; iy <= 3; iy++) {
-    if (!ix && !iy) continue;
-    const field = quadrupoleField(G, ix, iy), size = G === 0 ? 0 : Math.min(24, field.magnitude * 500);
-    const norm = field.magnitude || 1;
-    arrow(ctx, cx + ix * scale, cy - iy * scale, field.bx / norm * size, -field.by / norm * size, '#b5a0ff88', 1);
-  }
-  // Gaussian quantiles sampled deterministically, not Monte Carlo noise.
-  const beamX = cx + offset * scale;
-  ctx.save(); ctx.strokeStyle = '#55d9d066'; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.arc(beamX, cy, 2 * sigma * scale, 0, TAU); ctx.stroke(); ctx.restore();
-  for (let i = 0; i < 88; i++) {
-    const r = sigma * Math.sqrt(-2 * Math.log((i + .5) / 88));
-    const a = i * 2.39996323, x = offset + r * Math.cos(a), y = r * Math.sin(a);
-    const field = quadrupoleField(G, x, y), strength = Math.min(1, field.magnitude / .08);
-    dot(ctx, cx + x * scale, cy - y * scale, 1.5, C.cyan);
-    if (G > 0) {
-      const phase = (time * .55 + i * .173) % 1;
-      if (phase < .28) {
-        ctx.save(); ctx.globalAlpha = (1 - phase / .28) * strength;
-        dot(ctx, cx + x * scale, cy - y * scale, 2 + 5 * phase, C.amber, true); ctx.restore();
-      }
-    }
-  }
-  dot(ctx, cx, cy, 3.5, C.ink); text(ctx, 'magnetic axis', cx - 44, cy + 24, C.ink, 10);
-  text(ctx, `σ = ${number(sigma)} mm`, 105, 366, C.cyan, 12);
-  text(ctx, `offset = ${number(offset)} mm`, 265, 366, C.cyan, 12);
-  line(ctx, [[450, 81], [450, 354]], C.grid);
-  text(ctx, 'FORCE ON AN ELECTRON', 500, 102, C.muted, 10);
-  const fx = 665, fy = 169;
-  line(ctx, [[fx - 108, fy], [fx + 108, fy]], C.grid);
-  line(ctx, [[fx, fy - 48], [fx, fy + 48]], C.grid);
-  if (G > 0) {
-    arrow(ctx, fx - 100, fy, 65, 0, C.cyan, 2); arrow(ctx, fx + 100, fy, -65, 0, C.cyan, 2);
-    arrow(ctx, fx, fy - 20, 0, -40, C.amber, 2); arrow(ctx, fx, fy + 20, 0, 40, C.amber, 2);
-  }
-  text(ctx, G === 0 ? 'No gradient → no transverse force' : 'x focuses · y defocuses', fx, 254, C.ink, 14, 'center');
-  text(ctx, 'Bₓ = −Gy     Bᵧ = −Gx', fx, 291, C.purple, 17, 'center');
-  text(ctx, 'local SR power ∝ |B|² ∝ x² + y²', fx, 321, C.amber, 14, 'center');
-  text(ctx, 'A finite beam radiates even when centered.', fx, 346, C.muted, 12, 'center');
-  text(ctx, 'Purple: magnetic field · cyan/amber arrows: force · source plane, not a downstream footprint', 450, 393, C.muted, 10, 'center');
-}
-
 export function renderMagnet(ctx, w, h, id, state, time) {
-  const renderer = { dipole, quadrupole }[id]; if (!renderer) return false;
+  if(id==='quadrupole')return renderQuadrupole(ctx,w,h,state,time);
+  const renderer = { dipole }[id]; if (!renderer) return false;
   ctx.save(); ctx.scale(w / 900, h / 400); renderer(ctx, state, time); ctx.restore(); return true;
 }

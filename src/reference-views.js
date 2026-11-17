@@ -1,5 +1,6 @@
+import {getQuadrupoleModel} from './quadrupole-model.js';
 import {getMonteCarloRun} from './monte-carlo.js';
-import {gamma, criticalEnergy, spectrum, vertical, aberrate, reflectivity, criticalAngle, attenuation, transmission, specularFraction, undulatorEnergy, sinc, harmonicCoupling, dipoleProperties, quadrupoleProperties, quadrupoleSourceDensity, photonFluxPerBandwidth, powerPerBandwidth, transverseRadiation} from './physics.js';
+import {gamma, criticalEnergy, spectrum, vertical, aberrate, reflectivity, criticalAngle, attenuation, transmission, specularFraction, undulatorEnergy, sinc, harmonicCoupling, dipoleProperties, quadrupoleSourceDensity, photonFluxPerBandwidth, powerPerBandwidth, transverseRadiation} from './physics.js';
 import {createCavityModel,cavityPattern,cavityPeak} from './cavity-physics.js';
 
 export const colors = { cyan: '#208f86', amber: '#d69b4b', purple: '#9884c3', grey: '#b6c6c6' };
@@ -152,16 +153,16 @@ export function getReferenceView(id,s) {
       legend:[['Electron orbit','#55d9d0'],['Tangential photons','#f5bc70'],['Magnetic field','#b5a0ff']],note:'Magnetic rigidity uses p ≈ E/c for ultrarelativistic electrons. Δθ = L/ρ. At fixed B, Ec ∝ E² and power ∝ E² B² I L.'});
   }
   if(id==='quadrupole') {
-    const q=quadrupoleProperties(E,s.gradient,s.sigma,s.offset,s.length),lim=Math.abs(s.offset)+4*s.sigma;
+    const q=getQuadrupoleModel(s),lim=Math.abs(s.offset)+4*s.sigma;
     const power=sample(-lim,lim,500,x=>quadrupoleSourceDensity(x,s.gradient,s.sigma,s.offset));
     const max=Math.max(...power.map(p=>p[1]))||1;
     return base('Where the quadrupole radiation originates','Horizontal position from magnetic center (mm)',[-lim,lim],[
-      metric('Entrance RMS field',`${fmt(q.rmsField,4)} T`),metric('Ec at RMS field · indicative',`${fmt(q.criticalKeV,3)} keV`),metric('Frozen-beam power · 100 mA',`${fmt(q.powerKW*1000)} W`),metric('Assumed σx = σy',`${fmt(s.sigma)} mm`)],{
+      metric('Path-averaged RMS field',`${fmt(q.rmsField,4)} T`),metric('Ec at RMS field · indicative',`${fmt(.665*q.rmsField*E**2,3)} keV`),metric('Integrated SR power · 100 mA',`${fmt(q.powerW)} W`),metric('Electrons lost at bore',`${fmt(100*q.lossFraction,1)}%`)],{
       traces:[trace('Power-weighted source density',colors.cyan,power.map(([x,y])=>[x,y/max])),trace('Particle density',colors.grey,sample(-lim,lim,500,x=>Math.exp(-.5*((x-s.offset)/s.sigma)**2)),true)],
-      markers:[{x:0,label:'Magnetic center',color:colors.amber},{x:s.offset,label:'Beam centroid',color:colors.purple}],badge:'ENTRANCE-PLANE MODEL',yLabel:'Each density / its own peak',
-      caption:'A round Gaussian beam weighted by B², integrated over y. Each trace has its own peak normalization. At x = 0 the projected source need not vanish: off-axis particles at nonzero y still radiate. Power holds the entrance distribution constant along the magnet.',
+      markers:[{x:0,label:'Magnetic center',color:colors.amber},{x:s.offset,label:'Beam centroid',color:colors.purple}],badge:'ENTRANCE-PLANE REFERENCE',yLabel:'Each density / its own peak',
+      caption:'A round Gaussian beam weighted by B², integrated over y. Each trace has its own peak normalization. At x = 0 the projected source need not vanish: off-axis particles at nonzero y still radiate. This plot shows the entrance plane; the power readout integrates the evolving beam through the magnet.',
       legend:[['Beam electrons','#55d9d0'],['Local radiation','#f5bc70'],['Magnetic field','#b5a0ff']],
-      note:'Ideal Bx = −Gy, By = −Gx. For this electron direction, Fx ∝ −x and Fy ∝ +y. Real power requires the changing beam envelope along z; RMS-field Ec is not an exact quadrupole spectrum.'});
+      note:'Ideal Bx = −Gy, By = −Gx. For this electron direction, Fx ∝ −x and Fy ∝ +y. Transport uses an initially parallel Gaussian beam and a 25 mm absorbing bore. Photon packets carry equal energy; the target counts packet arrivals. RMS-field Ec is indicative, not an exact spectrum.'});
   }
   if(id==='insertion') {
     const e1=undulatorEnergy(E,s.period,s.K),field=s.K/(.934*s.period/10),ecW=.665*field*E**2;
