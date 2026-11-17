@@ -130,7 +130,7 @@ test('deep links, legacy links and unknown links select a usable experiment', as
       assert.equal(element('title').textContent, experiment.title);
       assert.equal(element('synrad2d-panel').hidden, true);
       assert.ok(element('metrics').children.length > 0);
-      assert.equal(element('monte-carlo-progress').hidden, !['vertical', 'horizontal', 'polarization', 'penetration', 'monte-carlo'].includes(experiment.id));
+      assert.equal(element('monte-carlo-progress').hidden, !['vertical', 'polarization', 'penetration', 'monte-carlo'].includes(experiment.id));
       for (const control of experiment.controls) assert.equal(typeof element(`control-${control.key}`).events.input, 'function');
     }
     navigate('rough');
@@ -154,7 +154,7 @@ test('cavity energy starts and resets at 0.01 GeV independently of shared beam e
     assert.equal(energy(), .000516);
     element('reset').events.click();
     assert.equal(energy(), .01);
-    navigate('horizontal');
+    navigate('vertical');
     assert.equal(Number(element('control-energy').value), 5);
   });
 });
@@ -162,11 +162,11 @@ test('cavity energy starts and resets at 0.01 GeV independently of shared beam e
 test('shared energy follows input, clamps to the destination range and resets with chart scales', async () => {
   await withApp('#spectrum', ({element, navigate, input, preset}) => {
     preset('energy', 500);
-    navigate('horizontal');
+    navigate('vertical');
     assert.equal(Number(element('control-energy').value), 10);
     navigate('spectrum');
     assert.equal(Number(element('control-energy').value), 10);
-    navigate('horizontal');
+    navigate('vertical');
     input('energy', .25);
     navigate('spectrum');
     assert.equal(Number(element('control-energy').value), .25);
@@ -205,7 +205,7 @@ test('photon progress completes, pauses and restarts through the app controls', 
 });
 
 test('space pauses the experiment while preserving keyboard input and dialog interactions', async () => {
-  await withApp('#horizontal', ({element, document, navigate, space}) => {
+  await withApp('#vertical', ({element, document, navigate, space}) => {
     assert.equal(element('pause').getAttribute('aria-pressed'), 'false');
     assert.equal(space(), true);
     assert.equal(element('pause').getAttribute('aria-pressed'), 'true');

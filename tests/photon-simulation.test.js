@@ -6,7 +6,7 @@ import {createDistributionRun, getPhotonSimulation, resetPhotonSimulation} from 
 import {renderPhotonSimulation} from '../src/photon-scenes.js';
 import {gamma, transmission} from '../src/physics.js';
 
-const ids = ['vertical', 'horizontal', 'polarization', 'penetration'];
+const ids = ['vertical', 'polarization', 'penetration'];
 const defaults = id => Object.fromEntries(experiments.find(e => e.id === id).controls.map(c => [c.key, c.default]));
 
 test('angular coordinates narrow exactly with electron energy at fixed photon energy ratio', () => {
@@ -22,7 +22,7 @@ test('angular coordinates narrow exactly with electron energy at fixed photon en
 });
 
 test('horizontal samples reproduce the uniform fan plus Gaussian angular width', () => {
-  const state = {...defaults('horizontal'), photons: 100000};
+  const state = {energy: 3, bend: 30, distance: 10, duration: 5, photons: 100000};
   const run = createDistributionRun('horizontal', state);
   let sum = 0, squared = 0;
   advanceMonteCarlo(run, 5, batch => {

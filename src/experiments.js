@@ -51,17 +51,6 @@ export const experiments = [
     controls: [energy(), ratio(), ...simulationControls()],
   },
   {
-    id: 'horizontal', title: 'Horizontal radiation fan', short: 'Horizontal distribution', group: 'Geometry',
-    kicker: '05 / Along the bending plane',
-    description: 'Each point on a bending trajectory emits light near its local tangent. Together those tangents form a horizontal fan.',
-    notice: 'Increase the bend angle to widen the fan, then move the observation screen farther away.',
-    equation: 'Fan width ≈ L × Δθ;  edge angular scale ≈ 1 / γ',
-    explanation: 'For a uniform bend, the range of tangent directions is the bend angle Δθ. The plotted teaching model convolves a uniform angular fan with a finite-width kernel on the scale 1 / γ. At small angles the footprint width is approximately observation distance L times Δθ. The scene exaggerates angles; it omits finite source size and detailed short-magnet interference.',
-    slides: '17–18, 25',
-    controls: [energy(), { key: 'bend', label: 'Magnet bend angle', min: 1, max: 100, step: 1, unit: 'mrad', default: 30 },
-      { key: 'distance', label: 'Screen distance', min: 1, max: 30, step: 1, unit: 'm', default: 10 }, ...simulationControls()],
-  },
-  {
     id: 'polarization', title: 'Polarization', short: 'Polarization', group: 'Geometry',
     kicker: '06 / Two polarization planes',
     description: 'Watch photons build the parallel, perpendicular and sum XY heatmaps. The plot below shows sampled hit counts along the zero-angle slice.',
